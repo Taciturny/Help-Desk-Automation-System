@@ -376,7 +376,7 @@ class KnowledgeRetriever:
             except Exception as e:
                 logger.error(f"Error adding batch {i}: {e}")
 
-    def search_knowledge(self, query: str, n_results: int = 5) -> List[RetrievalResult]:
+    def search_knowledge(self, query: str, n_results: int = 3) -> List[RetrievalResult]:
         """Enhanced search with reranking and confidence boosting."""
         try:
             # Get more initial results for reranking

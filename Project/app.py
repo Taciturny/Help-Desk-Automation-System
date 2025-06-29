@@ -1,18 +1,18 @@
 """
-IT Help Desk System - Flask API
-===============================
-Optimized REST API integrating classification, escalation, and knowledge retrieval.
+IT Help Desk System - Streamlit App
+===================================
+Interactive help desk system with classification, escalation, and knowledge retrieval.
 """
 
 import logging
 import os
+from datetime import datetime
 from typing import Any, Dict
 
-from flask import Flask, jsonify, render_template, request
-from flask_cors import CORS
+import streamlit as st
 
 # Import your existing modules
-from classifier  import RequestClassifier
+from classifier import RequestClassifier
 from escalation import EscalationEngine
 from response import ResponseGenerator
 from retrieval import KnowledgeRetriever
@@ -21,10 +21,13 @@ from retrieval import KnowledgeRetriever
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize Flask app
-app = Flask(__name__)
-CORS(app)
-app.config["JSON_SORT_KEYS"] = False
+# Page configuration
+st.set_page_config(
+    page_title="IT Help Desk System",
+    page_icon="🎧",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
 
 class HelpDeskAPI:
@@ -38,16 +41,21 @@ class HelpDeskAPI:
         self.cohere_api_key = os.getenv("COHERE_API_KEY")
         self.knowledge_enabled = False
 
-        if self.cohere_api_key and self.cohere_api_key.strip() and self.cohere_api_key != "your-api-key-here":
+        if (
+            self.cohere_api_key
+            and self.cohere_api_key.strip()
+            and self.cohere_api_key != "your-api-key-here"
+        ):
             try:
                 # Test the API key first with a simple request
                 import cohere
+
                 co = cohere.Client(self.cohere_api_key)
-                # Test with a simple embedding - FIXED: Added required input_type parameter
+                # Test with a simple embedding
                 test_response = co.embed(
                     texts=["test"],
                     model="embed-english-v3.0",
-                    input_type="search_document"  # This was missing!
+                    input_type="search_document",
                 )
 
                 # If test passes, initialize the full system
@@ -63,14 +71,14 @@ class HelpDeskAPI:
                     logger.info(f"Knowledge base loaded with {doc_count} documents")
                 except Exception as kb_error:
                     logger.error(f"Failed to load knowledge base: {kb_error}")
-                    # Keep knowledge system enabled but with empty KB
 
             except Exception as e:
                 logger.error(f"Failed to initialize knowledge system: {e}")
-                logger.warning("Running without knowledge features")
                 self.knowledge_enabled = False
         else:
-            logger.warning("COHERE_API_KEY not set or invalid - knowledge features disabled")
+            logger.warning(
+                "COHERE_API_KEY not set or invalid - knowledge features disabled"
+            )
 
     def process_request(
         self, user_request: str, user_info: Dict = None
@@ -94,7 +102,9 @@ class HelpDeskAPI:
                 ticket_data.update(user_info)
 
             # Step 3: Check escalation
-            escalation = self.escalation_engine.get_escalation_recommendation(ticket_data)
+            escalation = self.escalation_engine.get_escalation_recommendation(
+                ticket_data
+            )
 
             # Step 4: Generate knowledge-based response if available
             knowledge_response = None
@@ -106,14 +116,15 @@ class HelpDeskAPI:
                         "software_installation": "installation",
                         "policy_question": "policy",
                     }
-                    template = template_map.get(classification.category.value, "standard")
+                    template = template_map.get(
+                        classification.category.value, "standard"
+                    )
 
                     knowledge_response = self.response_generator.get_knowledge_response(
                         user_request, template
                     )
                 except Exception as e:
                     logger.error(f"Knowledge response error: {e}")
-                    # Continue without knowledge response
 
             # Step 5: Compile final response
             return {
@@ -128,7 +139,9 @@ class HelpDeskAPI:
                 "knowledge_response": (
                     {
                         "available": self.knowledge_enabled,
-                        "answer": knowledge_response.answer if knowledge_response else None,
+                        "answer": (
+                            knowledge_response.answer if knowledge_response else None
+                        ),
                         "confidence": (
                             round(knowledge_response.confidence, 3)
                             if knowledge_response
@@ -150,7 +163,6 @@ class HelpDeskAPI:
 
         except Exception as e:
             logger.error(f"Error in process_request: {e}")
-            # Return a basic response if processing fails
             return {
                 "request_id": f"REQ-{hash(user_request) % 100000:05d}",
                 "classification": {
@@ -163,7 +175,7 @@ class HelpDeskAPI:
                     "should_escalate": True,
                     "escalation_level": "level_1",
                     "description": "Manual review required due to processing error",
-                    "estimated_time": "4 hours"
+                    "estimated_time": "4 hours",
                 },
                 "knowledge_response": {"available": False},
                 "recommendation": "Your request needs human review due to a system processing error.",
@@ -188,175 +200,338 @@ class HelpDeskAPI:
         )
 
 
-# Initialize the API
-helpdesk_api = HelpDeskAPI()
+# Initialize session state
+if 'helpdesk_api' not in st.session_state:
+    with st.spinner("Initializing Help Desk System..."):
+        st.session_state.helpdesk_api = HelpDeskAPI()
 
+if 'request_history' not in st.session_state:
+    st.session_state.request_history = []
 
-# Routes
-@app.route("/")
-def index():
-    """Serve the main interface."""
-    return render_template("index.html")
+# Main UI
+st.title("🎧 IT Help Desk System")
+st.markdown("---")
 
+# Sidebar with system info
+with st.sidebar:
+    st.header("System Status")
 
-@app.route("/api/health")
-def health_check():
-    """Health check endpoint."""
-    return jsonify(
-        {
-            "status": "healthy",
-            "features": {
-                "classification": True,
-                "escalation": True,
-                "knowledge_retrieval": helpdesk_api.knowledge_enabled,
-            },
-        }
-    )
+    # System health check
+    health_status = {
+        "Classification": "✅ Active",
+        "Escalation": "✅ Active",
+        "Knowledge Base": (
+            "✅ Active"
+            if st.session_state.helpdesk_api.knowledge_enabled
+            else "❌ Disabled"
+        ),
+    }
 
+    for feature, status in health_status.items():
+        st.write(f"**{feature}:** {status}")
 
-@app.route("/api/process", methods=["POST"])
-def process_request():
-    """Process a help desk request."""
-    try:
-        data = request.get_json()
-
-        if not data or "request" not in data:
-            return jsonify({"error": "Missing 'request' field"}), 400
-
-        user_request = data["request"].strip()
-        if not user_request:
-            return jsonify({"error": "Empty request"}), 400
-
-        # Optional user info
-        user_info = data.get("user_info", {})
-
-        # Process the request
-        result = helpdesk_api.process_request(user_request, user_info)
-
-        return jsonify(result)
-
-    except Exception as e:
-        logger.error(f"Processing error: {e}")
-        return jsonify({
-            "error": "Internal server error",
-            "details": str(e) if app.debug else "Please try again"
-        }), 500
-
-
-@app.route("/api/classify", methods=["POST"])
-def classify_only():
-    """Classification-only endpoint."""
-    try:
-        data = request.get_json()
-        user_request = data.get("request", "").strip()
-
-        if not user_request:
-            return jsonify({"error": "Empty request"}), 400
-
-        classification = helpdesk_api.classifier.classify_request(user_request)
-
-        return jsonify(
-            {
-                "category": classification.category.value,
-                "confidence": round(classification.confidence, 3),
-                "keywords_matched": classification.keywords_matched,
-                "reasoning": classification.reasoning,
-            }
+    if not st.session_state.helpdesk_api.knowledge_enabled:
+        st.warning(
+            "💡 Set COHERE_API_KEY environment variable to enable knowledge features"
         )
 
-    except Exception as e:
-        logger.error(f"Classification error: {e}")
-        return jsonify({"error": "Classification failed", "details": str(e)}), 500
+    st.markdown("---")
 
-
-@app.route("/api/knowledge", methods=["POST"])
-def knowledge_search():
-    """Knowledge search endpoint."""
-    if not helpdesk_api.knowledge_enabled:
-        return jsonify({"error": "Knowledge system not available"}), 503
-
-    try:
-        data = request.get_json()
-        query = data.get("query", "").strip()
-
-        if not query:
-            return jsonify({"error": "Empty query"}), 400
-
-        # Search knowledge base
-        results = helpdesk_api.retriever.search_knowledge(query, n_results=5)
-
-        return jsonify(
-            {
-                "query": query,
-                "results": [
-                    {
-                        "content": (
-                            result.content[:200] + "..."
-                            if len(result.content) > 200
-                            else result.content
-                        ),
-                        "source": result.source,
-                        "relevance": round(result.relevance_score, 3),
-                        "type": result.metadata.get("type", "unknown"),
-                    }
-                    for result in results
-                ],
-            }
-        )
-
-    except Exception as e:
-        logger.error(f"Knowledge search error: {e}")
-        return jsonify({"error": "Knowledge search failed", "details": str(e)}), 500
-
-
-@app.route("/api/stats")
-def get_stats():
-    """Get system statistics."""
+    # Statistics
+    st.header("System Stats")
     try:
         stats = {
-            "classification_categories": len(helpdesk_api.classifier.category_patterns),
-            "escalation_rules": len(helpdesk_api.escalation_engine.rules),
-            "knowledge_system": helpdesk_api.knowledge_enabled,
+            "Classification Categories": len(
+                st.session_state.helpdesk_api.classifier.category_patterns
+            ),
+            "Escalation Rules": len(
+                st.session_state.helpdesk_api.escalation_engine.rules
+            ),
+            "Requests Processed": len(st.session_state.request_history),
         }
 
-        if helpdesk_api.knowledge_enabled:
+        if st.session_state.helpdesk_api.knowledge_enabled:
             try:
-                kb_stats = helpdesk_api.retriever.get_stats()
-                stats["knowledge_base"] = kb_stats
-            except Exception as e:
-                logger.error(f"Error getting KB stats: {e}")
-                stats["knowledge_base"] = {"error": "Stats unavailable"}
+                kb_stats = st.session_state.helpdesk_api.retriever.get_stats()
+                stats["Knowledge Documents"] = kb_stats.get("total_documents", "N/A")
+            except:
+                stats["Knowledge Documents"] = "Error"
 
-        return jsonify(stats)
+        for stat, value in stats.items():
+            st.metric(stat, value)
     except Exception as e:
-        logger.error(f"Error getting stats: {e}")
-        return jsonify({"error": "Stats unavailable"}), 500
+        st.error(f"Error loading stats: {e}")
 
+# Main content area
+tab1, tab2, tab3, tab4 = st.tabs(
+    [
+        "📝 Submit Request",
+        "🔍 Classification Only",
+        "📚 Knowledge Search",
+        "📊 Request History",
+    ]
+)
 
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({"error": "Endpoint not found"}), 404
+with tab1:
+    st.header("Submit IT Help Request")
 
+    # User information (optional)
+    with st.expander("User Information (Optional)"):
+        col1, col2 = st.columns(2)
+        with col1:
+            user_name = st.text_input("Name")
+            user_department = st.text_input("Department")
+        with col2:
+            user_email = st.text_input("Email")
+            user_priority = st.selectbox(
+                "Priority", ["Low", "Medium", "High", "Critical"]
+            )
 
-@app.errorhandler(500)
-def internal_error(error):
-    logger.error(f"500 error: {error}")
-    return jsonify({"error": "Internal server error"}), 500
+    # Main request input
+    st.subheader("Describe Your Issue")
+    user_request = st.text_area(
+        "Please describe your IT issue in detail:",
+        height=150,
+        placeholder="Example: My laptop won't turn on after I spilled coffee on it yesterday...",
+    )
 
-# Add this for Render
-application = app
+    # Sample requests for testing
+    st.subheader("Quick Test Examples")
+    col1, col2, col3 = st.columns(3)
 
-# Keep this for local development
-# if __name__ == "__main__":
-#     port = int(os.environ.get("PORT", 5000))
-#     debug = os.environ.get("DEBUG", "False").lower() == "true"
+    with col1:
+        if st.button("🖥️ Hardware Issue"):
+            user_request = "My computer screen is flickering and making strange noises"
+            st.rerun()
 
-#     logger.info(f"Starting Help Desk API on port {port}")
-#     logger.info(
-#         f"Knowledge system: {'Enabled' if helpdesk_api.knowledge_enabled else 'Disabled'}"
-#     )
+    with col2:
+        if st.button("💾 Software Problem"):
+            user_request = (
+                "I can't install the new Microsoft Office update on my laptop"
+            )
+            st.rerun()
 
-#     app.run(host="0.0.0.0", port=port, debug=debug)
+    with col3:
+        if st.button("📋 Policy Question"):
+            user_request = (
+                "What's the company policy on using personal devices for work?"
+            )
+            st.rerun()
 
-# Add this for Render
-# application = app
+    # Process request
+    if st.button("🚀 Submit Request", type="primary"):
+        if user_request.strip():
+            with st.spinner("Processing your request..."):
+                # Prepare user info
+                user_info = {}
+                if user_name:
+                    user_info["user_name"] = user_name
+                if user_department:
+                    user_info["department"] = user_department
+                if user_email:
+                    user_info["email"] = user_email
+                if user_priority:
+                    user_info["priority"] = user_priority.lower()
+
+                # Process the request
+                result = st.session_state.helpdesk_api.process_request(
+                    user_request, user_info
+                )
+
+                # Add to history
+                st.session_state.request_history.append(
+                    {
+                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "request": user_request,
+                        "result": result,
+                    }
+                )
+
+                # Display results
+                st.success(f"✅ Request processed! ID: {result['request_id']}")
+
+                # Classification results
+                st.subheader("🏷️ Classification Results")
+                classification = result['classification']
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric(
+                        "Category", classification['category'].replace('_', ' ').title()
+                    )
+                    st.metric("Confidence", f"{classification['confidence']:.1%}")
+
+                with col2:
+                    if classification['keywords_matched']:
+                        st.write("**Keywords Matched:**")
+                        st.write(", ".join(classification['keywords_matched']))
+
+                    st.write("**Reasoning:**")
+                    st.write(classification['reasoning'])
+
+                # Escalation results
+                st.subheader("⚡ Escalation Analysis")
+                escalation = result['escalation']
+
+                if escalation['should_escalate']:
+                    st.error(
+                        f"🚨 Escalation Required: {escalation['escalation_level']}"
+                    )
+                    st.write(f"**Reason:** {escalation['description']}")
+                    st.write(f"**Estimated Time:** {escalation['estimated_time']}")
+                else:
+                    st.success(
+                        "✅ No escalation needed - can be handled by Level 1 support"
+                    )
+
+                # Knowledge response
+                if result['knowledge_response']['available']:
+                    st.subheader("💡 Knowledge Base Response")
+                    knowledge = result['knowledge_response']
+
+                    if knowledge['answer']:
+                        st.info(knowledge['answer'])
+                        st.write(f"**Confidence:** {knowledge['confidence']:.1%}")
+                        st.write(f"**Sources Found:** {knowledge['sources_count']}")
+                    else:
+                        st.warning("No relevant knowledge found for this request")
+
+                # Final recommendation
+                st.subheader("📋 Recommendation")
+                st.info(result['recommendation'])
+        else:
+            st.error("Please enter a request description")
+
+with tab2:
+    st.header("Request Classification Only")
+    st.write("Test the classification system without full processing")
+
+    classify_request = st.text_area(
+        "Enter request to classify:", height=100, key="classify_input"
+    )
+
+    if st.button("🏷️ Classify Request"):
+        if classify_request.strip():
+            with st.spinner("Classifying..."):
+                classification = (
+                    st.session_state.helpdesk_api.classifier.classify_request(
+                        classify_request
+                    )
+                )
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric(
+                        "Category",
+                        classification.category.value.replace('_', ' ').title(),
+                    )
+                    st.metric("Confidence", f"{classification.confidence:.1%}")
+
+                with col2:
+                    if classification.keywords_matched:
+                        st.write("**Keywords Matched:**")
+                        for keyword in classification.keywords_matched:
+                            st.code(keyword)
+
+                st.write("**Reasoning:**")
+                st.info(classification.reasoning)
+        else:
+            st.error("Please enter a request to classify")
+
+with tab3:
+    st.header("Knowledge Base Search")
+
+    if st.session_state.helpdesk_api.knowledge_enabled:
+        search_query = st.text_input(
+            "Search knowledge base:", placeholder="Enter search terms..."
+        )
+
+        if st.button("🔍 Search Knowledge Base"):
+            if search_query.strip():
+                with st.spinner("Searching..."):
+                    try:
+                        results = (
+                            st.session_state.helpdesk_api.retriever.search_knowledge(
+                                search_query, n_results=5
+                            )
+                        )
+
+                        if results:
+                            st.success(f"Found {len(results)} relevant documents")
+
+                            for i, result in enumerate(results, 1):
+                                with st.expander(
+                                    f"Result {i} - Relevance: {result.relevance_score:.1%}"
+                                ):
+                                    st.write(f"**Source:** {result.source}")
+                                    st.write(
+                                        f"**Type:** {result.metadata.get('type', 'Unknown')}"
+                                    )
+                                    st.write("**Content:**")
+                                    st.write(
+                                        result.content[:500] + "..."
+                                        if len(result.content) > 500
+                                        else result.content
+                                    )
+                        else:
+                            st.warning("No relevant documents found")
+                    except Exception as e:
+                        st.error(f"Search failed: {e}")
+            else:
+                st.error("Please enter a search query")
+    else:
+        st.warning(
+            "Knowledge base is not available. Please configure COHERE_API_KEY to enable this feature."
+        )
+
+with tab4:
+    st.header("Request History")
+
+    if st.session_state.request_history:
+        # Clear history button
+        if st.button("🗑️ Clear History", type="secondary"):
+            st.session_state.request_history = []
+            st.rerun()
+
+        st.write(f"**Total Requests:** {len(st.session_state.request_history)}")
+
+        # Display history in reverse order (newest first)
+        for i, entry in enumerate(reversed(st.session_state.request_history)):
+            with st.expander(f"{entry['timestamp']} - {entry['result']['request_id']}"):
+                st.write("**Request:**")
+                st.write(entry['request'])
+
+                st.write("**Classification:**")
+                classification = entry['result']['classification']
+                st.write(
+                    f"Category: {classification['category']}, Confidence: {classification['confidence']:.1%}"
+                )
+
+                st.write("**Escalation:**")
+                escalation = entry['result']['escalation']
+                if escalation['should_escalate']:
+                    st.write(f"⚠️ Escalated to {escalation['escalation_level']}")
+                else:
+                    st.write("✅ No escalation needed")
+
+                st.write("**Recommendation:**")
+                st.write(entry['result']['recommendation'])
+
+                # Show raw JSON if needed
+                if st.checkbox("Show raw data", key=f"raw_{i}"):
+                    st.json(entry['result'])
+    else:
+        st.info(
+            "No requests have been processed yet. Submit a request in the first tab to see history here."
+        )
+
+# Footer
+st.markdown("---")
+st.markdown(
+    """
+    <div style='text-align: center; color: gray;'>
+        IT Help Desk System v2.0 | Built with Streamlit
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
