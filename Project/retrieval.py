@@ -22,7 +22,16 @@ class KnowledgeRetriever:
 
     def __init__(self, cohere_api_key: str, collection_name: str = "helpdesk_kb"):
         self.cohere_client = cohere.Client(cohere_api_key)
-        self.chroma_client = chromadb.Client(Settings(anonymized_telemetry=False))
+
+        # Disable telemetry to prevent PostHog errors on cloud deployments
+        self.chroma_client = chromadb.Client(
+            Settings(
+                anonymized_telemetry=False,
+                allow_reset=True,
+                is_persistent=False,  # Explicitly use in-memory mode
+            )
+        )
+
         self.collection_name = collection_name
         self._setup_collection()
 
@@ -67,16 +76,17 @@ class KnowledgeRetriever:
     def _setup_collection(self):
         """Setup ChromaDB collection with optimized settings."""
         try:
-            _ = self.chroma_client.get_collection(self.collection_name)
+            # Try to get existing collection
+            self.collection = self.chroma_client.get_collection(self.collection_name)
             # If it exists, delete it to recreate with new dimensions
             self.chroma_client.delete_collection(self.collection_name)
             logger.info(
                 f"Deleted old collection '{self.collection_name}' to reset dimensions."
             )
         except Exception as e:
-            logger.info(f"No existing collection found (or error deleting): {e}")
+            logger.info(f"No existing collection found: {str(e)}")
 
-        # Create a fresh collection (now compatible with 1024-dim embeddings). I had used 384 dim
+        # Create a fresh collection (now compatible with 1024-dim embeddings)
         self.collection = self.chroma_client.create_collection(
             self.collection_name,
             metadata={
@@ -296,7 +306,7 @@ class KnowledgeRetriever:
 
     def _process_markdown(self, filepath: str) -> List[Dict]:
         """Enhanced markdown processing with better section detection."""
-        with open(filepath) as f:
+        with open(filepath, encoding='utf-8') as f:
             content = f.read()
 
         docs = []
@@ -334,37 +344,6 @@ class KnowledgeRetriever:
             )
 
         return docs
-
-    # def _process_markdown(self, filepath: str) -> List[Dict]:
-    #     """Enhanced markdown processing with better section detection."""
-    #     with open(filepath, 'r') as f:
-    #         content = f.read()
-
-    #     docs = []
-    #     # Split by headers (## or ###)
-    #     import re
-    #     # sections = re.split(r'\n(#{2,3})\s+', content)
-    #     sections = re.split(r'\n(#{1,3})\s+', content)
-
-    #     current_section = ""
-    #     for i, part in enumerate(sections):
-    #         if part.startswith('#'):
-    #             continue
-    #         elif i > 0 and sections[i-1].startswith('#'):
-    #             # This is a header
-    #             current_section = part.strip()
-    #         else:
-    #             # This is content
-    #             if current_section and part.strip():
-    #                 full_content = f"# {current_section}\n\n{part.strip()}"
-    #                 docs.extend(self._process_content_with_chunks(
-    #                     full_content,
-    #                     f"{os.path.basename(filepath)}#{current_section}",
-    #                     "policy",
-    #                     current_section
-    #                 ))
-
-    #     return docs
 
     def _add_to_db(self, documents: List[Dict]):
         """Add documents to ChromaDB with batch processing."""
