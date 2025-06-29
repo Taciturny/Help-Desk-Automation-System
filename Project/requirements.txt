@@ -6,3 +6,4 @@ flask==2.3.3
 flask-cors==4.0.0
 pytest
 streamlit
+sqlite3 >= 3.35.0
