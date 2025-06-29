@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
-app.config['JSON_SORT_KEYS'] = False
+app.config["JSON_SORT_KEYS"] = False
 
 
 class HelpDeskAPI:
@@ -151,13 +151,13 @@ helpdesk_api = HelpDeskAPI()
 
 
 # Routes
-@app.route('/')
+@app.route("/")
 def index():
     """Serve the main interface."""
-    return render_template('index.html')
+    return render_template("index.html")
 
 
-@app.route('/api/health')
+@app.route("/api/health")
 def health_check():
     """Health check endpoint."""
     return jsonify(
@@ -172,21 +172,21 @@ def health_check():
     )
 
 
-@app.route('/api/process', methods=['POST'])
+@app.route("/api/process", methods=["POST"])
 def process_request():
     """Process a help desk request."""
     try:
         data = request.get_json()
 
-        if not data or 'request' not in data:
+        if not data or "request" not in data:
             return jsonify({"error": "Missing 'request' field"}), 400
 
-        user_request = data['request'].strip()
+        user_request = data["request"].strip()
         if not user_request:
             return jsonify({"error": "Empty request"}), 400
 
         # Optional user info
-        user_info = data.get('user_info', {})
+        user_info = data.get("user_info", {})
 
         # Process the request
         result = helpdesk_api.process_request(user_request, user_info)
@@ -198,12 +198,12 @@ def process_request():
         return jsonify({"error": "Internal server error"}), 500
 
 
-@app.route('/api/classify', methods=['POST'])
+@app.route("/api/classify", methods=["POST"])
 def classify_only():
     """Classification-only endpoint."""
     try:
         data = request.get_json()
-        user_request = data.get('request', '').strip()
+        user_request = data.get("request", "").strip()
 
         if not user_request:
             return jsonify({"error": "Empty request"}), 400
@@ -224,7 +224,7 @@ def classify_only():
         return jsonify({"error": "Classification failed"}), 500
 
 
-@app.route('/api/knowledge', methods=['POST'])
+@app.route("/api/knowledge", methods=["POST"])
 def knowledge_search():
     """Knowledge search endpoint."""
     if not helpdesk_api.knowledge_enabled:
@@ -232,7 +232,7 @@ def knowledge_search():
 
     try:
         data = request.get_json()
-        query = data.get('query', '').strip()
+        query = data.get("query", "").strip()
 
         if not query:
             return jsonify({"error": "Empty query"}), 400
@@ -252,7 +252,7 @@ def knowledge_search():
                         ),
                         "source": result.source,
                         "relevance": round(result.relevance_score, 3),
-                        "type": result.metadata.get('type', 'unknown'),
+                        "type": result.metadata.get("type", "unknown"),
                     }
                     for result in results
                 ],
@@ -264,7 +264,7 @@ def knowledge_search():
         return jsonify({"error": "Knowledge search failed"}), 500
 
 
-@app.route('/api/stats')
+@app.route("/api/stats")
 def get_stats():
     """Get system statistics."""
     stats = {
@@ -290,13 +290,13 @@ def internal_error(error):
     return jsonify({"error": "Internal server error"}), 500
 
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('DEBUG', 'False').lower() == 'true'
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("DEBUG", "False").lower() == "true"
 
     logger.info(f"Starting Help Desk API on port {port}")
     logger.info(
         f"Knowledge system: {'Enabled' if helpdesk_api.knowledge_enabled else 'Disabled'}"
     )
 
-    app.run(host='0.0.0.0', port=port, debug=debug)
+    app.run(host="0.0.0.0", port=port, debug=debug)

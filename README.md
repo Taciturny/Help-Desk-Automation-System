@@ -1,51 +1,32 @@
-# Help Desk Automation System
+# Intelligent Help Desk System
 
-A comprehensive AI-powered help desk automation system that classifies user requests, retrieves relevant knowledge, generates intelligent responses, and handles escalations automatically.
+An AI-powered help desk system that automatically classifies user requests, retrieves relevant information from a knowledge base, generates contextual responses using LLMs, and determines when human escalation is needed.
 
 ## 🚀 Features
 
-- **Intelligent Request Classification**: Automatically categorizes support requests using keyword-based pattern matching
-- **Knowledge Retrieval**: Searches through documentation and knowledge base using semantic similarity
-- **Response Generation**: Creates contextual responses using Cohere's language models
-- **Escalation Management**: Automatically escalates complex or high-priority issues
-- **Interactive CLI**: User-friendly command-line interface for real-time support
-- **Comprehensive Logging**: Detailed logging for monitoring and debugging
-
-## 📋 Supported Request Categories
-
-- **Password Reset**: Account lockouts, forgotten passwords, authentication issues
-- **Software Installation**: Application setup, installation failures, configuration
-- **Hardware Failure**: Device malfunctions, screen issues, equipment problems
-- **Network Connectivity**: WiFi problems, VPN issues, internet connectivity
-- **Email Configuration**: Outlook setup, email sync issues, distribution lists
-- **Security Incidents**: Suspicious activities, malware, phishing attempts
-- **Policy Questions**: Company policies, approval processes, guidelines
+- **Request Classification**: Automatically categorizes IT support requests into predefined types
+- **Knowledge Retrieval**: Semantic search through documentation using vector embeddings
+- **Response Generation**: Context-aware responses using Large Language Models
+- **Escalation Logic**: Smart routing for complex issues requiring human intervention
+- **REST API**: Clean API interface for integration with existing systems
 
 ## 📁 Project Structure
 
 ```bash
 Help-Desk-Automation-System/
 │   README.md
-├── .github/
-│   └── workflows/
-│       └── python-app.yml
+├── .github/workflows/workflows
 └───Project/
-    │   app.py
-    │   categories.json
-    │   classifier.py
-    │   company_it_policies.md
-    │   data_models.py
+    │   app.py  # Flask API
+    │   classifier.py  # Request categorization
+    │   data_models.py # Pydantic schemas
     │   escalation.py
-    │   installation_guides.json
-    │   knowledge_base.md
     │   main.py
     │   pyproject.toml
     │   requirements.txt
     │   response.py
     │   retrieval.py
-    │   test.py
-    │   test_requests.json
-    │   troubleshooting_database.json
+    │   test.py #series of users requests
     │
     ├───templates/
     │       index.html
@@ -56,19 +37,45 @@ Help-Desk-Automation-System/
     │   │   test_escalation.py
     │   │   test_response.py
     │   │   test_retrieval.py
-    │   │
+    │   │                              # Unit/integration tests
     │   └───integration/
     │           __init__.py
     │           test_classify_and_escalate.py
     │           test_full_workflow.py
 ```
 
-## 🛠 Installation
+## 🏗️ Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Flask API     │    │   Classification │    │   Knowledge     │
+│   (app.py)      │───▶│   System         │───▶│   Retrieval    │
+│                 │    │   (classifier.py)│    │   (retrieval.py)│
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Response      │    │   Escalation     │    │   Vector DB     │
+│   Generation    │    │   Engine         │    │   (ChromaDB)    │
+│   (response.py) │    │   (escalation.py)│    │                 │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+```
+
+## 🛠️ Technology Stack
+
+- **Backend**: Python, Flask
+- **AI/ML**: Cohere API (embeddings & generation), ChromaDB (vector storage)
+- **Code Quality**: Black (formatting), Ruff (linting)
+- **Testing**: pytest (unit & integration tests)
+- **Deployment**: Render
+- **CI/CD**: GitHub Actions
+
+## 📦 Installation
 
 ### Prerequisites
 
-- Python 3.9 or higher
-- Cohere API key (sign up at [cohere.ai](https://cohere.ai))
+- Python 3.9+
+- Cohere API key
 
 ### Setup
 
@@ -78,257 +85,234 @@ Help-Desk-Automation-System/
    cd help-desk-automation-system
    ```
 
-2. **Create virtual environment**
-   ```bash
-   python -m venv helpdesk_env
-   source helpdesk_env/bin/activate  # On Windows: helpdesk_env\Scripts\activate
-   ```
-
-3. **Install dependencies**
+2. **Install dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Set up environment variables**
+3. **Environment configuration**
    ```bash
-   # Option 1: Export directly
-   export COHERE_API_KEY="your-cohere-api-key-here"
-
-   # Option 2: Create .env file
-   echo "COHERE_API_KEY=your-cohere-api-key-here" > .env
+   export COHERE_API_KEY="your-cohere-api-key"
+   export FLASK_ENV="development"  # or "production"
    ```
-## 🚀 Usage
 
-### Interactive Mode (default)
-Run the system in interactive mode for real-time support:
+4. **Initialize knowledge base**
+   ```bash
+   python -m retrieval
+   ```
 
+5. **Run the application**
+   ```bash
+   python app.py
+   ```
+
+The API will be available at `http://localhost:5000`
+
+## 🔧 API Usage
+
+### Classify Request
 ```bash
-python main.py
+POST /api/classify
+Content-Type: application/json
+
+{
+    "request": "I forgot my password and can't log in"
+}
 ```
 
-This launches an interactive CLI where users can type their support requests and receive immediate responses.
+**Response:**
+```json
+{
+    "category": "password_reset",
+    "confidence": 0.92,
+    "keywords_matched": ["password", "forgot", "can't", "log", "in"],
+    "reasoning": "Matched 5 indicators for password_reset"
+}
+```
 
-# Demo mode
+### Get Knowledge Response
 ```bash
-python main.py
-> demo
+POST /api/knowledge
+Content-Type: application/json
+
+{
+    "query": "How do I install Slack?",
+    "template_type": "installation"
+}
 ```
 
-# Help
+**Response:**
+```json
+{
+    "query": "How do I install Slack?",
+    "answer": "To install Slack:\n1. Visit the company software portal...",
+    "confidence": 0.87,
+    "sources": ["installation#slack", "software_guides"]
+}
+```
+
+### Check Escalation
 ```bash
-python main.py --help
+POST /api/escalate
+Content-Type: application/json
+
+{
+    "request": "Security breach detected on server",
+    "category": "security_incident",
+    "confidence": 0.95
+}
 ```
 
-### Command Line Options
+**Response:**
+```json
+{
+    "should_escalate": true,
+    "escalation_level": "security_team",
+    "priority": "high",
+    "contact_info": "security-team@company.com",
+    "response_time_sla": 15
+}
+```
 
-### Batch Mode
-Process a single query programmatically:
+## 🧪 Testing
 
+### Run all tests
 ```bash
-python main.py --batch --query "I forgot my password and can't log in"
+pytest
 ```
 
+### Run with coverage
 ```bash
-python main.py [OPTIONS]
-
-## 🏗 System Architecture
-
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   User Input    │───▶│   Classifier     │───▶│  Knowledge      │
-│                 │    │                  │    │  Retrieval      │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-                                                         │
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Final         │◀───│   Escalation     │◀───│   Response      │
-│   Response      │    │   Engine         │    │   Generation    │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
+pytest --cov=. --cov-report=html
 ```
 
-### Core Components
-
-1. **Request Classifier** (`classifier.py`)
-   - Keyword-based pattern matching
-   - Confidence scoring
-   - Extensible for ML-based classification
-
-2. **Knowledge Retriever** (`retrieval.py`)
-   - ChromaDB vector database
-   - Cohere embeddings
-   - Multi-method confidence scoring
-
-3. **Response Generator** (`response.py`)
-   - Template-based responses
-   - Context-aware generation
-   - Multiple response formats
-
-4. **Data Models** (`data_models.py`)
-   - Type-safe data structures
-   - Escalation management
-   - Request/response schemas
-
-3. **Escalation Engine** (`escalation_engine.py`)
-   - Rule-based ticket evaluation
-   - Priority-sorted escalation matching
-   - Business hours and SLA management
-
-
-6. **Escalation Rules Manager** (`escalation_rules.py`)
-   - JSON-based rule configuration
-   - CRUD operations for rules
-   - Default escalation rule templates
-
-## 🎯 Example Usage
-
-### Interactive Session
-
-```
-============================================================
-   HELP DESK AUTOMATION SYSTEM
-============================================================
-
-# Interactive mode (default)
-python main.py
-
-# Demo mode
-python main.py
-> demo
-
-# Batch processing
-python main.py --batch queries.txt
-
-# Help
-python main.py --help
-Type 'quit', 'exit', or 'help' for special commands
-Enter your IT support request below:
-
-👤 Your request: I can't install Slack on my computer
-
-🔄 Processing your request...
-
-🎯 CATEGORY: Software Installation
-
-💡 SOLUTION:
-   1. Download Slack from the company software portal
-   2. Right-click the installer and select "Run as administrator"
-   3. Follow the installation wizard
-   4. Restart your computer if prompted
-
-🔗 ADDITIONAL RESOURCES:
-   • Software Catalog: https://company.com/software
-   • Installation Guidelines: https://company.com/installation-guide
-
-------------------------------------------------------------
-```
-
-### Batch Processing
-
+### Run specific test types
 ```bash
-$ python main.py --batch --query "My laptop screen is flickering"
+# Run all unit tests individually
+pytest tests/test_classifier.py
+pytest tests/test_escalation.py
+pytest tests/test_response.py
+pytest tests/test_retrieval.py
 
-🎯 CATEGORY: Hardware Failure
+# OR run all unit tests at once
+pytest tests/
 
-💡 SOLUTION:
-   1. Check display cable connections
-   2. Update graphics drivers
-   3. Test with external monitor
-
-⚠️  ESCALATION REQUIRED
-   Reason: Hardware issues require physical inspection
-   Contact: hardware-support@company.com
+# Run only integration tests
+pytest tests/integration/
 ```
 
-## 📊 Monitoring & Logging
+## 🔍 Code Quality
 
-The system provides comprehensive logging and statistics:
-
-### View System Statistics
+### Format code
 ```bash
-# In interactive mode, type:
-stats
-
-📊 SYSTEM STATISTICS:
-  Knowledge Base: 156 documents
-  Total Requests: 42
-  Avg Confidence: 0.847
-  System Status: operational
+black .
 ```
 
-### Log Files
+### Lint code
+```bash
+ruff check .
+```
 
-- `helpdesk.log` - Complete system logs
-- Console output - Real-time feedback
-- Configurable log levels (DEBUG, INFO, WARNING, ERROR)
+### Run all quality checks
+```bash
+black . && ruff check . && pytest
+```
 
-## 🔒 Security & Privacy
+## 🚀 Deployment
 
-- No sensitive data stored in logs
-- API keys managed through environment variables
-- Request data processed in memory only
-- Escalation triggers for security incidents
+### Render Deployment
 
-## 🛡 Error Handling
+1. **Connect repository** to Render
+2. **Set environment variables**:
+   - `COHERE_API_KEY`: Your Cohere API key
+   - `FLASK_ENV`: `production`
+3. **Deploy** using the provided `render.yaml` configuration
 
-The system includes robust error handling:
+### Environment Variables
 
-- **API Failures**: Graceful fallback responses
-- **Missing Knowledge**: Automatic escalation
-- **Classification Errors**: Default to human review
-- **Network Issues**: Retry mechanisms
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `COHERE_API_KEY` | Cohere API key for embeddings and generation | Yes |
+| `FLASK_ENV` | Flask environment (development/production) | No |
+| `PORT` | Application port (default: 5000) | No |
 
-## 🚀 Extending the System
+## 📊 Performance Metrics
 
-### Adding New Classifications
-1. Extend `RequestCategory` enum in `data_models.py`
-2. Add patterns to `KeywordBasedClassifier`
-3. Update template mapping in main system
+The system tracks several key metrics:
 
-### Custom Response Templates
-1. Add new template method in `ResponseGenerator`
-2. Update `_get_template_type()` mapping
-3. Configure category-specific responses
+- **Classification Accuracy**: >90% on test dataset
+- **Response Confidence**: Average >0.75 for actionable responses
+- **Retrieval Relevance**: Top-3 results typically >0.8 relevance score
+- **Response Time**: <2 seconds for standard queries
 
-### Integration APIs
-The system can be easily integrated into:
-- Slack bots
-- Microsoft Teams apps
-- Web applications
-- Ticketing systems
+## 🔄 CI/CD Pipeline
 
-## 📈 Performance Metrics
+GitHub Actions workflow includes:
 
-- **Classification Accuracy**: ~85-90% for well-defined categories
-- **Response Time**: < 2 seconds for most queries
-- **Knowledge Retrieval**: Semantic search with 0.3+ relevance threshold
-- **Escalation Rate**: ~15-20% of requests (configurable)
+1. **Code Quality**: Black formatting, Ruff linting
+2. **Testing**: Unit and integration tests with coverage
+3. **Security**: Dependency vulnerability scanning
+4. **Deployment**: Automatic deployment to Render on main branch
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/new-feature`)
-3. Commit changes (`git commit -am 'Add new feature'`)
-4. Push to branch (`git push origin feature/new-feature`)
-5. Create Pull Request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run quality checks (`black . && ruff check . && pytest`)
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+## 📝 Configuration Files
+
+### Knowledge Base Files
+- `categories.json`: Category definitions and metadata
+- `installation_guides.json`: Software installation procedures
+- `troubleshooting_database.json`: Common issues and solutions
+- `company_it_policies.md`: IT policies and guidelines
+- `knowledge_base.md`: General help documentation
+
+### Test Data
+- `test_requests.json`: Evaluation dataset with expected classifications
+
+## 🔧 Customization
+
+### Adding New Categories
+1. Update `RequestCategory` enum in `data_models.py`
+2. Add classification patterns in `classifier.py`
+3. Create escalation rules in `escalation.py`
+4. Update knowledge base documents
+
+### Adjusting Confidence Thresholds
+Modify confidence calculations in:
+- `classifier.py`: Classification confidence
+- `response.py`: Response generation confidence
+- `escalation.py`: Escalation trigger thresholds
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**Low Classification Confidence**
+- Add more keywords to category patterns
+- Update regex patterns for better matching
+- Expand knowledge base with relevant documents
+
+**Poor Retrieval Results**
+- Check Cohere API key configuration
+- Verify knowledge base loading
+- Review document chunking and embeddings
+
+**API Errors**
+- Validate JSON request format
+- Check required fields are present
+- Review error logs for specific issues
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-For questions or issues:
-
-1. Check the [Issues](https://github.com/yourusername/helpdesk-automation/issues) page
-2. Review the logs in `helpdesk.log`
-3. Ensure your Cohere API key is valid
-4. Verify all dependencies are installed
-
-## 🙏 Acknowledgments
-
-- [Cohere](https://cohere.ai) for language model APIs
-- [ChromaDB](https://www.trychroma.com/) for vector database
-- [scikit-learn](https://scikit-learn.org/) for ML utilities
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
-**Built with ❤️ for better IT support automation**
+**Built with ❤️ for intelligent IT support**

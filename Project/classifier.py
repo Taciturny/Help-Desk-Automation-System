@@ -33,19 +33,19 @@ class RequestClassifier:
         """Build keyword patterns for each category."""
         return {
             RequestCategory.PASSWORD_RESET: {
-                'keywords': [
-                    'password',
-                    'login',
-                    'forgot',
-                    'reset',
-                    'unlock',
-                    'locked out',
-                    'account locked',
-                    'sign in',
-                    'authentication',
-                    'credentials',
+                "keywords": [
+                    "password",
+                    "login",
+                    "forgot",
+                    "reset",
+                    "unlock",
+                    "locked out",
+                    "account locked",
+                    "sign in",
+                    "authentication",
+                    "credentials",
                 ],
-                'patterns': [
+                "patterns": [
                     r"forgot.*password",
                     r"can't.*log.*in",
                     r"reset.*password",
@@ -54,20 +54,20 @@ class RequestClassifier:
                 ],
             },
             RequestCategory.SOFTWARE_INSTALLATION: {
-                'keywords': [
-                    'install',
-                    'setup',
-                    'software',
-                    'application',
-                    'app',
-                    'program',
-                    'download',
-                    'upgrade',
-                    'update',
-                    'configure',
-                    'installation',
+                "keywords": [
+                    "install",
+                    "setup",
+                    "software",
+                    "application",
+                    "app",
+                    "program",
+                    "download",
+                    "upgrade",
+                    "update",
+                    "configure",
+                    "installation",
                 ],
-                'patterns': [
+                "patterns": [
                     r"install.*software",
                     r"setup.*application",
                     r"installation.*error",
@@ -76,24 +76,24 @@ class RequestClassifier:
                 ],
             },
             RequestCategory.HARDWARE_FAILURE: {
-                'keywords': [
-                    'laptop',
-                    'computer',
-                    'screen',
-                    'monitor',
-                    'keyboard',
-                    'mouse',
-                    'broken',
-                    'damaged',
-                    'hardware',
-                    'device',
-                    'flickering',
-                    'black screen',
-                    'not working',
-                    'died',
-                    'failed',
+                "keywords": [
+                    "laptop",
+                    "computer",
+                    "screen",
+                    "monitor",
+                    "keyboard",
+                    "mouse",
+                    "broken",
+                    "damaged",
+                    "hardware",
+                    "device",
+                    "flickering",
+                    "black screen",
+                    "not working",
+                    "died",
+                    "failed",
                 ],
-                'patterns': [
+                "patterns": [
                     r"screen.*flickering",
                     r"laptop.*broken",
                     r"computer.*not.*working",
@@ -102,19 +102,19 @@ class RequestClassifier:
                 ],
             },
             RequestCategory.NETWORK_CONNECTIVITY: {
-                'keywords': [
-                    'network',
-                    'internet',
-                    'wifi',
-                    'connection',
-                    'connectivity',
-                    'vpn',
-                    'can\'t connect',
-                    'no internet',
-                    'offline',
-                    'disconnect',
+                "keywords": [
+                    "network",
+                    "internet",
+                    "wifi",
+                    "connection",
+                    "connectivity",
+                    "vpn",
+                    "can't connect",
+                    "no internet",
+                    "offline",
+                    "disconnect",
                 ],
-                'patterns': [
+                "patterns": [
                     r"can't.*connect",
                     r"no.*internet",
                     r"wifi.*problem",
@@ -123,19 +123,19 @@ class RequestClassifier:
                 ],
             },
             RequestCategory.EMAIL_CONFIGURATION: {
-                'keywords': [
-                    'email',
-                    'outlook',
-                    'mail',
-                    'sync',
-                    'syncing',
-                    'configuration',
-                    'distribution list',
-                    'mailbox',
-                    'messages',
-                    'receiving',
+                "keywords": [
+                    "email",
+                    "outlook",
+                    "mail",
+                    "sync",
+                    "syncing",
+                    "configuration",
+                    "distribution list",
+                    "mailbox",
+                    "messages",
+                    "receiving",
                 ],
-                'patterns': [
+                "patterns": [
                     r"email.*not.*sync",
                     r"outlook.*problem",
                     r"not.*receiving.*email",
@@ -144,20 +144,20 @@ class RequestClassifier:
                 ],
             },
             RequestCategory.SECURITY_INCIDENT: {
-                'keywords': [
-                    'security',
-                    'virus',
-                    'malware',
-                    'suspicious',
-                    'hacked',
-                    'hack',
-                    'phishing',
-                    'spam',
-                    'pop-up',
-                    'suspicious email',
-                    'incident',
+                "keywords": [
+                    "security",
+                    "virus",
+                    "malware",
+                    "suspicious",
+                    "hacked",
+                    "hack",
+                    "phishing",
+                    "spam",
+                    "pop-up",
+                    "suspicious email",
+                    "incident",
                 ],
-                'patterns': [
+                "patterns": [
                     r"suspicious.*email",
                     r"think.*hacked",
                     r"security.*incident",
@@ -166,18 +166,18 @@ class RequestClassifier:
                 ],
             },
             RequestCategory.POLICY_QUESTION: {
-                'keywords': [
-                    'policy',
-                    'procedure',
-                    'allowed',
-                    'permission',
-                    'approval',
-                    'what\'s the policy',
-                    'company policy',
-                    'guidelines',
-                    'rules',
+                "keywords": [
+                    "policy",
+                    "procedure",
+                    "allowed",
+                    "permission",
+                    "approval",
+                    "what's the policy",
+                    "company policy",
+                    "guidelines",
+                    "rules",
                 ],
-                'patterns': [
+                "patterns": [
                     r"what.*policy",
                     r"company.*policy",
                     r"need.*approval",
@@ -215,13 +215,13 @@ class RequestClassifier:
             matched_keywords = []
 
             # Check keyword matches
-            for keyword in criteria['keywords']:
+            for keyword in criteria["keywords"]:
                 if keyword in request_lower:
                     score += 1
                     matched_keywords.append(keyword)
 
             # Check pattern matches (weighted higher)
-            for pattern in criteria['patterns']:
+            for pattern in criteria["patterns"]:
                 if re.search(pattern, request_lower):
                     score += 2
                     matched_keywords.append(f"pattern: {pattern}")
@@ -263,8 +263,8 @@ class RequestClassifier:
 
     def get_category_info(self, category: RequestCategory) -> Dict:
         """Get information about a specific category from categories.json"""
-        if self.categories_data and 'categories' in self.categories_data:
-            return self.categories_data['categories'].get(category.value, {})
+        if self.categories_data and "categories" in self.categories_data:
+            return self.categories_data["categories"].get(category.value, {})
         return {}
 
 
@@ -292,8 +292,8 @@ class ClassificationEvaluator:
         correct_predictions = 0
 
         for test_case in test_data:
-            request = test_case['request']
-            expected = test_case['expected_classification']
+            request = test_case["request"]
+            expected = test_case["expected_classification"]
 
             result = self.classifier.classify_request(request)
             predicted = result.category.value
@@ -304,22 +304,22 @@ class ClassificationEvaluator:
 
             results.append(
                 {
-                    'request': request,
-                    'expected': expected,
-                    'predicted': predicted,
-                    'confidence': result.confidence,
-                    'correct': is_correct,
-                    'keywords_matched': result.keywords_matched,
+                    "request": request,
+                    "expected": expected,
+                    "predicted": predicted,
+                    "confidence": result.confidence,
+                    "correct": is_correct,
+                    "keywords_matched": result.keywords_matched,
                 }
             )
 
         accuracy = correct_predictions / len(test_data) if test_data else 0
 
         return {
-            'accuracy': accuracy,
-            'total_tests': len(test_data),
-            'correct_predictions': correct_predictions,
-            'detailed_results': results,
+            "accuracy": accuracy,
+            "total_tests": len(test_data),
+            "correct_predictions": correct_predictions,
+            "detailed_results": results,
         }
 
     def _load_test_data(self, test_file: str) -> List[Dict]:
@@ -327,7 +327,7 @@ class ClassificationEvaluator:
         try:
             with open(test_file) as f:
                 data = json.load(f)
-                return data.get('test_requests', [])
+                return data.get("test_requests", [])
         except FileNotFoundError:
             print(f"Warning: {test_file} not found.")
             return []
@@ -368,7 +368,7 @@ def main():
     evaluator = ClassificationEvaluator(classifier)
     eval_results = evaluator.evaluate_test_requests()
 
-    if 'error' not in eval_results:
+    if "error" not in eval_results:
         print("\n=== Evaluation Results ===")
         print(f"Accuracy: {eval_results['accuracy']:.2f}")
         print(

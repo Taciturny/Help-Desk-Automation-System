@@ -9,7 +9,7 @@ from retrieval import KnowledgeRetriever
 class TestKnowledgeRetriever:
     @pytest.fixture
     def retriever(self):
-        with patch('cohere.Client'), patch('chromadb.Client'):
+        with patch("cohere.Client"), patch("chromadb.Client"):
             retriever = KnowledgeRetriever("test-api-key")
             retriever.collection = MagicMock()
             return retriever
@@ -32,9 +32,9 @@ class TestKnowledgeRetriever:
     def test_search_knowledge(self, retriever):
         # Mock ChromaDB response
         mock_results = {
-            'documents': [["test document content"]],
-            'metadatas': [[{"source": "test_source", "type": "test_type"}]],
-            'distances': [[0.5]],
+            "documents": [["test document content"]],
+            "metadatas": [[{"source": "test_source", "type": "test_type"}]],
+            "distances": [[0.5]],
         }
         retriever.collection.query.return_value = mock_results
 
@@ -45,6 +45,6 @@ class TestKnowledgeRetriever:
         assert 0 < results[0].relevance_score < 1.0
 
     def test_empty_search(self, retriever):
-        retriever.collection.query.return_value = {'documents': [[]]}
+        retriever.collection.query.return_value = {"documents": [[]]}
         results = retriever.search_knowledge("nonexistent query")
         assert len(results) == 0

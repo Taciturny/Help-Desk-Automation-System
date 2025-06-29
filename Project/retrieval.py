@@ -28,48 +28,46 @@ class KnowledgeRetriever:
 
         # Enhanced keyword mapping for better retrieval
         self.keyword_categories = {
-            'password': [
-                'password',
-                'login',
-                'authenticate',
-                'reset',
-                'forgot',
-                'locked',
-                'access',
+            "password": [
+                "password",
+                "login",
+                "authenticate",
+                "reset",
+                "forgot",
+                "locked",
+                "access",
             ],
-            'wifi': [
-                'wifi',
-                'wireless',
-                'network',
-                'internet',
-                'connection',
-                'connect',
+            "wifi": [
+                "wifi",
+                "wireless",
+                "network",
+                "internet",
+                "connection",
+                "connect",
             ],
-            'software': [
-                'install',
-                'software',
-                'application',
-                'app',
-                'download',
-                'setup',
+            "software": [
+                "install",
+                "software",
+                "application",
+                "app",
+                "download",
+                "setup",
             ],
-            'email': ['email', 'outlook', 'mail', 'smtp', 'imap', 'exchange'],
-            'hardware': [
-                'hardware',
-                'computer',
-                'laptop',
-                'printer',
-                'monitor',
-                'device',
+            "email": ["email", "outlook", "mail", "smtp", "imap", "exchange"],
+            "hardware": [
+                "hardware",
+                "computer",
+                "laptop",
+                "printer",
+                "monitor",
+                "device",
             ],
         }
 
     def _setup_collection(self):
         """Setup ChromaDB collection with optimized settings."""
         try:
-            _ = self.chroma_client.get_collection(
-                self.collection_name
-            )
+            _ = self.chroma_client.get_collection(self.collection_name)
             # If it exists, delete it to recreate with new dimensions
             self.chroma_client.delete_collection(self.collection_name)
             logger.info(
@@ -164,13 +162,13 @@ class KnowledgeRetriever:
 
         # Split by sections (double newlines or numbered steps)
         sections = []
-        if '\n\n' in content:
-            sections = [s.strip() for s in content.split('\n\n') if s.strip()]
+        if "\n\n" in content:
+            sections = [s.strip() for s in content.split("\n\n") if s.strip()]
         elif any(f"{i}." in content for i in range(1, 6)):
             # Handle numbered lists
             import re
 
-            sections = re.split(r'\n(?=\d+\.)', content)
+            sections = re.split(r"\n(?=\d+\.)", content)
         else:
             sections = [content]
 
@@ -227,11 +225,11 @@ class KnowledgeRetriever:
             content += f"Application: {app}\nType: Installation Guide\n\n"
             content += "Installation Steps:\n"
             content += "\n".join(
-                [f"{i+1}. {step}" for i, step in enumerate(guide['steps'])]
+                [f"{i+1}. {step}" for i, step in enumerate(guide["steps"])]
             )
 
             # Add system requirements if available
-            if 'requirements' in guide:
+            if "requirements" in guide:
                 content += f"\n\nSystem Requirements: {guide['requirements']}"
 
             docs.extend(
@@ -253,11 +251,11 @@ class KnowledgeRetriever:
             content += f"Problem: {issue}\nCategory: {details['category']}\n\n"
             content += "Troubleshooting Steps:\n"
             content += "\n".join(
-                [f"{i+1}. {step}" for i, step in enumerate(details['steps'])]
+                [f"{i+1}. {step}" for i, step in enumerate(details["steps"])]
             )
 
             # Add common symptoms
-            if 'symptoms' in details:
+            if "symptoms" in details:
                 content += f"\n\nCommon Symptoms: {', '.join(details['symptoms'])}"
 
             docs.extend(
@@ -265,7 +263,7 @@ class KnowledgeRetriever:
                     content,
                     f"troubleshooting#{issue}",
                     "troubleshooting",
-                    details['category'],
+                    details["category"],
                 )
             )
 
@@ -282,7 +280,7 @@ class KnowledgeRetriever:
             content += f"Description: {info['description']}\n"
             content += f"Typical Resolution Time: {info['typical_resolution_time']}\n"
 
-            if 'common_issues' in info:
+            if "common_issues" in info:
                 content += f"Common Issues: {', '.join(info['common_issues'])}"
 
             docs.append(
@@ -305,13 +303,13 @@ class KnowledgeRetriever:
         # Split by headers (## or ### or #)
         import re
 
-        sections = re.split(r'\n(#{1,3})\s+', content)
+        sections = re.split(r"\n(#{1,3})\s+", content)
 
         current_section = ""
         for i, part in enumerate(sections):
-            if part.startswith('#'):
+            if part.startswith("#"):
                 continue
-            elif i > 0 and sections[i - 1].startswith('#'):
+            elif i > 0 and sections[i - 1].startswith("#"):
                 # This is a header
                 current_section = part.strip()
             else:
@@ -412,23 +410,23 @@ class KnowledgeRetriever:
                 include=["documents", "metadatas", "distances"],
             )
 
-            if not results['documents'][0]:
+            if not results["documents"][0]:
                 return []
 
             # Enhanced confidence calculation
             confidence_scores = self._calculate_confidence(
-                results['distances'][0], query, results['documents'][0]
+                results["distances"][0], query, results["documents"][0]
             )
 
             # Create retrieval results
             retrieval_results = []
-            for i in range(len(results['documents'][0])):
+            for i in range(len(results["documents"][0])):
                 retrieval_results.append(
                     RetrievalResult(
-                        content=results['documents'][0][i],
-                        source=results['metadatas'][0][i]['source'],
+                        content=results["documents"][0][i],
+                        source=results["metadatas"][0][i]["source"],
                         relevance_score=confidence_scores[i],
-                        metadata=results['metadatas'][0][i],
+                        metadata=results["metadatas"][0][i],
                     )
                 )
 

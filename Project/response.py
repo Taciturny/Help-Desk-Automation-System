@@ -24,23 +24,23 @@ class ResponseGenerator:
 
         # Response quality indicators
         self.quality_indicators = {
-            'step_by_step': [
-                'step',
-                'steps',
-                'follow',
-                'first',
-                'then',
-                'next',
-                'finally',
+            "step_by_step": [
+                "step",
+                "steps",
+                "follow",
+                "first",
+                "then",
+                "next",
+                "finally",
             ],
-            'specific_urls': ['http', 'www', '.com', 'portal', 'website'],
-            'escalation_guidance': [
-                'contact',
-                'escalate',
-                'support',
-                'help desk',
-                'if',
-                'when',
+            "specific_urls": ["http", "www", ".com", "portal", "website"],
+            "escalation_guidance": [
+                "contact",
+                "escalate",
+                "support",
+                "help desk",
+                "if",
+                "when",
             ],
         }
 
@@ -58,7 +58,7 @@ class ResponseGenerator:
         # Check completeness (content diversity)
         content_types = set()
         for doc in context_docs:
-            content_types.add(doc.metadata.get('type', 'unknown'))
+            content_types.add(doc.metadata.get("type", "unknown"))
         completeness = min(1.0, len(content_types) / 3)  # Normalize to 3 types
 
         # Check specificity (detailed content)
@@ -82,7 +82,7 @@ class ResponseGenerator:
         # Organize context by type for better structure
         context_by_type = {}
         for doc in context_docs[:5]:  # Use top 5 for richer context
-            doc_type = doc.metadata.get('type', 'general')
+            doc_type = doc.metadata.get("type", "general")
             if doc_type not in context_by_type:
                 context_by_type[doc_type] = []
             context_by_type[doc_type].append(doc)
@@ -196,21 +196,21 @@ Policy Response:""",
         # Check for step-by-step instructions
         if any(
             indicator in response_lower
-            for indicator in self.quality_indicators['step_by_step']
+            for indicator in self.quality_indicators["step_by_step"]
         ):
             quality_score += 0.15
 
         # Check for specific references (URLs, contacts)
         if any(
             indicator in response_lower
-            for indicator in self.quality_indicators['specific_urls']
+            for indicator in self.quality_indicators["specific_urls"]
         ):
             quality_score += 0.10
 
         # Check for escalation guidance
         if any(
             indicator in response_lower
-            for indicator in self.quality_indicators['escalation_guidance']
+            for indicator in self.quality_indicators["escalation_guidance"]
         ):
             quality_score += 0.10
 

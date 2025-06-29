@@ -12,7 +12,7 @@ from retrieval import KnowledgeRetriever
 class TestFullWorkflow:
     @pytest.fixture
     def mock_system(self):
-        with patch('cohere.Client'), patch('chromadb.Client'):
+        with patch("cohere.Client"), patch("chromadb.Client"):
             classifier = RequestClassifier()
             engine = EscalationEngine()
             retriever = KnowledgeRetriever("test-api-key")

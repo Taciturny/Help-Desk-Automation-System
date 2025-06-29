@@ -117,23 +117,23 @@ class HelpDeskSystem:
         print("=" * 60)
 
         # Classification info
-        cls = result['classification']
+        cls = result["classification"]
         print(f"🏷️  CATEGORY: {cls['category'].replace('_', ' ').title()}")
         print(f"🎯 CONFIDENCE: {cls['confidence']:.2f}")
 
         # Escalation status
-        esc = result['escalation']
-        if esc['should_escalate']:
+        esc = result["escalation"]
+        if esc["should_escalate"]:
             print(f"⚠️  ESCALATION: {esc['escalation_level']} ({esc['priority']})")
             print(f"📞 CONTACT: {esc['contact_info']}")
         else:
             print("✅ NO ESCALATION NEEDED")
 
         # Knowledge response
-        kr = result['knowledge_response']
+        kr = result["knowledge_response"]
         print(f"\n💡 RESPONSE (Confidence: {kr['confidence']:.2f}):")
         print("-" * 40)
-        print(kr['answer'])
+        print(kr["answer"])
         print(f"\n📖 Sources used: {kr['sources_used']}")
 
 
@@ -163,11 +163,11 @@ def interactive_mode():
         try:
             user_input = input("\n💬 Enter your IT support request: ").strip()
 
-            if user_input.lower() in ['quit', 'exit', 'q']:
+            if user_input.lower() in ["quit", "exit", "q"]:
                 print("👋 Thank you for using the Help Desk System!")
                 break
 
-            if user_input.lower() == 'demo':
+            if user_input.lower() == "demo":
                 run_demo(system)
                 continue
 
@@ -213,9 +213,9 @@ def run_demo(system: HelpDeskSystem):
 
         if "error" not in result:
             # Simplified demo output
-            cls = result['classification']
-            esc = result['escalation']
-            kr = result['knowledge_response']
+            cls = result["classification"]
+            esc = result["escalation"]
+            kr = result["knowledge_response"]
 
             print(f"   Category: {cls['category']} (conf: {cls['confidence']:.2f})")
             print(f"   Escalate: {'Yes' if esc['should_escalate'] else 'No'}")
@@ -256,9 +256,9 @@ def batch_mode(queries_file: str):
 def main():
     """Main entry point with command line argument handling."""
     if len(sys.argv) > 1:
-        if sys.argv[1] == '--batch' and len(sys.argv) > 2:
+        if sys.argv[1] == "--batch" and len(sys.argv) > 2:
             batch_mode(sys.argv[2])
-        elif sys.argv[1] in ['--help', '-h']:
+        elif sys.argv[1] in ["--help", "-h"]:
             print("Usage:")
             print("  python main.py                 # Interactive mode")
             print("  python main.py --batch <file>  # Batch mode")

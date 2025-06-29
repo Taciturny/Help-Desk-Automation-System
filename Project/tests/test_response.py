@@ -9,7 +9,7 @@ from response import ResponseGenerator
 class TestResponseGenerator:
     @pytest.fixture
     def generator(self):
-        with patch('cohere.Client') as mock_cohere:
+        with patch("cohere.Client") as mock_cohere:
             generator = ResponseGenerator("test-api-key")
             generator.cohere_client = mock_cohere
             return generator
@@ -18,7 +18,7 @@ class TestResponseGenerator:
         response = generator.generate_response("test query", [])
         assert "don't have enough information" in response
 
-    @patch.object(ResponseGenerator, '_enhance_prompt_with_context')
+    @patch.object(ResponseGenerator, "_enhance_prompt_with_context")
     def test_response_generation(self, mock_enhance, generator):
         mock_enhance.return_value = "enhanced prompt"
         mock_response = MagicMock()
