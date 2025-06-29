@@ -1,4 +1,5 @@
-# Help-Desk-Automation-System
+# Help Desk Automation System
+
 A comprehensive AI-powered help desk automation system that classifies user requests, retrieves relevant knowledge, generates intelligent responses, and handles escalations automatically.
 
 ## 🚀 Features
@@ -19,6 +20,48 @@ A comprehensive AI-powered help desk automation system that classifies user requ
 - **Email Configuration**: Outlook setup, email sync issues, distribution lists
 - **Security Incidents**: Suspicious activities, malware, phishing attempts
 - **Policy Questions**: Company policies, approval processes, guidelines
+
+## 📁 Project Structure
+
+```bash
+Help-Desk-Automation-System/
+│   README.md
+├── .github/
+│   └── workflows/
+│       └── python-app.yml
+└───Project/
+    │   app.py
+    │   categories.json
+    │   classifier.py
+    │   company_it_policies.md
+    │   data_models.py
+    │   escalation.py
+    │   installation_guides.json
+    │   knowledge_base.md
+    │   main.py
+    │   pyproject.toml
+    │   requirements.txt
+    │   response.py
+    │   retrieval.py
+    │   test.py
+    │   test_requests.json
+    │   troubleshooting_database.json
+    │
+    ├───templates/
+    │       index.html
+    │
+    ├───tests/
+    │   │   __init__.py
+    │   │   test_classifier.py
+    │   │   test_escalation.py
+    │   │   test_response.py
+    │   │   test_retrieval.py
+    │   │
+    │   └───integration/
+    │           __init__.py
+    │           test_classify_and_escalate.py
+    │           test_full_workflow.py
+```
 
 ## 🛠 Installation
 
@@ -56,8 +99,7 @@ A comprehensive AI-powered help desk automation system that classifies user requ
    ```
 ## 🚀 Usage
 
-### Interactive Mode
-
+### Interactive Mode (default)
 Run the system in interactive mode for real-time support:
 
 ```bash
@@ -66,25 +108,28 @@ python main.py
 
 This launches an interactive CLI where users can type their support requests and receive immediate responses.
 
-### Batch Mode
+# Demo mode
+```bash
+python main.py
+> demo
+```
 
+# Help
+```bash
+python main.py --help
+```
+
+### Command Line Options
+
+### Batch Mode
 Process a single query programmatically:
 
 ```bash
 python main.py --batch --query "I forgot my password and can't log in"
 ```
 
-### Command Line Options
-
 ```bash
 python main.py [OPTIONS]
-
-Options:
-  --log-level {DEBUG,INFO,WARNING,ERROR}  Set logging level (default: INFO)
-  --batch                                 Run in batch mode (non-interactive)
-  --query TEXT                           Single query to process (for batch mode)
-  --help                                 Show help message
-```
 
 ## 🏗 System Architecture
 
@@ -141,6 +186,19 @@ Options:
 ============================================================
    HELP DESK AUTOMATION SYSTEM
 ============================================================
+
+# Interactive mode (default)
+python main.py
+
+# Demo mode
+python main.py
+> demo
+
+# Batch processing
+python main.py --batch queries.txt
+
+# Help
+python main.py --help
 Type 'quit', 'exit', or 'help' for special commands
 Enter your IT support request below:
 
@@ -257,6 +315,7 @@ The system can be easily integrated into:
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
+
 For questions or issues:
 
 1. Check the [Issues](https://github.com/yourusername/helpdesk-automation/issues) page
@@ -271,4 +330,5 @@ For questions or issues:
 - [scikit-learn](https://scikit-learn.org/) for ML utilities
 
 ---
+
 **Built with ❤️ for better IT support automation**

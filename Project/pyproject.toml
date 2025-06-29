@@ -1,0 +1,21 @@
+[project]
+name = "Help-Desk-Automation-System"
+version = "0.1.0"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+skip-string-normalization = true  # Preserves string quotes
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",   # Pycodestyle errors (indentation, syntax)
+    "F",   # Pyflakes (unused vars, imports)
+    "B",   # Flake8-bugbear (common bugs)
+    "I",   # Isort (import sorting)
+    "UP",  # Pyupgrade (modern Python syntax)
+]
+ignore = ["E501"]  # Ignore line-too-long (handled by black)

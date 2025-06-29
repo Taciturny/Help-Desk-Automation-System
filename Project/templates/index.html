@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Help Desk Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .request-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .request-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            margin-bottom: 15px;
+        }
+
+        .result-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .confidence-badge {
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .confidence-high {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .confidence-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .confidence-low {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .classification-info {
+            background: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+
+        .escalation-alert {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+
+        .escalation-alert.high {
+            background: #fef2f2;
+            border-left-color: #ef4444;
+        }
+
+        .escalation-alert.medium {
+            background: #fffbeb;
+            border-left-color: #f59e0b;
+        }
+
+        .knowledge-response {
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .info-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .info-label {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .examples {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .examples h3 {
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+
+        .example-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .example-btn {
+            background: white;
+            border: 1px solid #d1d5db;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .example-btn:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .example-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛠️ IT Help Desk Assistant</h1>
+            <p>Intelligent request classification and support guidance</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="request">Describe your IT issue or question:</label>
+                    <textarea
+                        id="request"
+                        class="request-input"
+                        placeholder="e.g., I forgot my password and can't log into my computer..."
+                        rows="4"
+                    ></textarea>
+                </div>
+
+                <button id="submit-btn" class="submit-btn" onclick="processRequest()">
+                    🔍 Analyze Request
+                </button>
+            </div>
+
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                Processing your request...
+            </div>
+
+            <div id="results" class="results">
+                <!-- Results will be populated here -->
+            </div>
+
+            <div class="examples">
+                <h3>💡 Try these examples:</h3>
+                <div class="example-buttons">
+                    <button class="example-btn" onclick="setExample('I forgot my password and can\'t log into my computer')">
+                        Password Reset
+                    </button>
+                    <button class="example-btn" onclick="setExample('My laptop screen is flickering and going black randomly')">
+                        Hardware Issue
+                    </button>
+                    <button class="example-btn" onclick="setExample('I need to install Slack for our team communication')">
+                        Software Installation
+                    </button>
+                    <button class="example-btn" onclick="setExample('My WiFi keeps disconnecting every few minutes')">
+                        Network Problem
+                    </button>
+                    <button class="example-btn" onclick="setExample('I think my computer has been hacked, seeing strange pop-ups')">
+                        Security Incident
+                    </button>
+                    <button class="example-btn" onclick="setExample('What\'s the company policy on installing personal software?')">
+                        Policy Question
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setExample(text) {
+            document.getElementById('request').value = text;
+        }
+
+        function getConfidenceClass(confidence) {
+            if (confidence >= 0.7) return 'confidence-high';
+            if (confidence >= 0.4) return 'confidence-medium';
+            return 'confidence-low';
+        }
+
+        function getConfidenceText(confidence) {
+            if (confidence >= 0.7) return 'High Confidence';
+            if (confidence >= 0.4) return 'Medium Confidence';
+            return 'Low Confidence';
+        }
+
+        function formatCategory(category) {
+            return category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        async function processRequest() {
+            const requestText = document.getElementById('request').value.trim();
+
+            if (!requestText) {
+                alert('Please enter a request first.');
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('submit-btn').disabled = true;
+
+            try {
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        request: requestText
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayResults(data);
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('results').innerHTML = `
+                    <div class="error-message">
+                        ❌ Error processing request: ${error.message}
+                        <br>Please try again or contact IT support directly.
+                    </div>
+                `;
+                document.getElementById('results').classList.add('active');
+            } finally {
+                // Hide loading state
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('submit-btn').disabled = false;
+            }
+        }
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            const classification = data.classification;
+            const escalation = data.escalation;
+            const knowledge = data.knowledge_response;
+
+            let html = `
+                <div class="result-card">
+                    <div class="result-header">
+                        <h3 class="result-title">📋 Request Analysis</h3>
+                        <span class="confidence-badge ${getConfidenceClass(classification.confidence)}">
+                            ${getConfidenceText(classification.confidence)} (${(classification.confidence * 100).toFixed(1)}%)
+                        </span>
+                    </div>
+
+                    <div class="classification-info">
+                        <strong>📂 Category:</strong> ${formatCategory(classification.category)}<br>
+                        <strong>🎯 Reasoning:</strong> ${classification.reasoning}<br>
+                        ${classification.keywords_matched.length > 0 ?
+                            `<strong>🔍 Keywords Matched:</strong> ${classification.keywords_matched.join(', ')}` : ''}
+                    </div>
+
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Request ID</div>
+                            <div class="info-value">${data.request_id}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Category</div>
+                            <div class="info-value">${formatCategory(classification.category)}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Confidence</div>
+                            <div class="info-value">${(classification.confidence * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Escalation information
+            if (escalation.should_escalate) {
+                html += `
+                    <div class="result-card">
+                        <div class="result-header">
+                            <h3 class="result-title">⚠️ Escalation Required</h3>
+                            <span class="confidence-badge ${escalation.priority === 'critical' ? 'confidence-low' :
+                                escalation.priority === 'high' ? 'confidence-medium' : 'confidence-high'}">
+                                ${escalation.priority.toUpperCase()}
+                            </span>
+                        </div>
+
+                        <div class="escalation-alert ${escalation.priority}">
+                            <strong>🎯 Level:</strong> ${escalation.escalation_level}<br>
+                            <strong>📧 Contact:</strong> ${escalation.contact_info}<br>
+                            <strong>⏱️ Response SLA:</strong> ${escalation.response_time_sla} minutes<br>
+                            <strong>📝 Description:</strong> ${escalation.description}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Knowledge response
+            if (knowledge.available && knowledge.answer) {
+                html += `
+                    <div class="result-card">
+                        <div class="result-header">
+                            <h3 class="result-title">💡 Knowledge Base Response</h3>
+                            <span class="confidence-badge ${getConfidenceClass(knowledge.confidence)}">
+                                ${getConfidenceText(knowledge.confidence)} (${(knowledge.confidence * 100).toFixed(1)}%)
+                            </span>
+                        </div>
+
+                        <div class="knowledge-response">
+                            <strong>🤖 AI Assistant:</strong><br>
+                            ${knowledge.answer}
+                            ${knowledge.sources_count > 0 ?
+                                `<br><br><small>📚 Based on ${knowledge.sources_count} knowledge base sources</small>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Recommendation
+            html += `
+                <div class="result-card">
+                    <div class="result-header">
+                        <h3 class="result-title">🎯 Recommendation</h3>
+                    </div>
+
+                    <div class="classification-info">
+                        ${data.recommendation}
+                    </div>
+                </div>
+            `;
+
+            resultsDiv.innerHTML = html;
+            resultsDiv.classList.add('active');
+        }
+
+        // Allow Enter key to submit (Ctrl+Enter for new line)
+        document.getElementById('request').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey) {
+                e.preventDefault();
+                processRequest();
+            }
+        });
+
+        // Auto-resize textarea
+        document.getElementById('request').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+        });
+    </script>
+</body>
+</html>
