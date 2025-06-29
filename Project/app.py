@@ -43,8 +43,12 @@ class HelpDeskAPI:
                 # Test the API key first with a simple request
                 import cohere
                 co = cohere.Client(self.cohere_api_key)
-                # Test with a simple embedding
-                test_response = co.embed(texts=["test"], model="embed-english-v3.0")
+                # Test with a simple embedding - FIXED: Added required input_type parameter
+                test_response = co.embed(
+                    texts=["test"],
+                    model="embed-english-v3.0",
+                    input_type="search_document"  # This was missing!
+                )
 
                 # If test passes, initialize the full system
                 self.retriever = KnowledgeRetriever(self.cohere_api_key)
