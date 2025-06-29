@@ -289,14 +289,17 @@ def not_found(error):
 def internal_error(error):
     return jsonify({"error": "Internal server error"}), 500
 
+# Keep this for local development
+# if __name__ == "__main__":
+#     port = int(os.environ.get("PORT", 5000))
+#     debug = os.environ.get("DEBUG", "False").lower() == "true"
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    debug = os.environ.get("DEBUG", "False").lower() == "true"
+#     logger.info(f"Starting Help Desk API on port {port}")
+#     logger.info(
+#         f"Knowledge system: {'Enabled' if helpdesk_api.knowledge_enabled else 'Disabled'}"
+#     )
 
-    logger.info(f"Starting Help Desk API on port {port}")
-    logger.info(
-        f"Knowledge system: {'Enabled' if helpdesk_api.knowledge_enabled else 'Disabled'}"
-    )
+#     app.run(host="0.0.0.0", port=port, debug=debug)
 
-    app.run(host="0.0.0.0", port=port, debug=debug)
+# Add this for Render
+application = app
