@@ -23,14 +23,21 @@ class KnowledgeRetriever:
     def __init__(self, cohere_api_key: str, collection_name: str = "helpdesk_kb"):
         self.cohere_client = cohere.Client(cohere_api_key)
 
-        # Disable telemetry to prevent PostHog errors on cloud deployments
-        self.chroma_client = chromadb.Client(
-            Settings(
-                chroma_db_impl="duckdb+parquet",
-                persist_directory=None,
-                anonymized_telemetry=False,
+        # Ensure the persistence directory exists
+        self.persist_dir = "/tmp/chroma"
+        os.makedirs(self.persist_dir, exist_ok=True)
+
+        try:
+            self.chroma_client = chromadb.PersistentClient(
+                path=self.persist_dir,
+                settings=Settings(
+                    chroma_db_impl="duckdb+parquet",
+                    anonymized_telemetry=False
+                )
             )
-        )
+        except Exception as e:
+            logger.error(f"Failed to initialize ChromaDB: {str(e)}")
+            raise
 
         self.collection_name = collection_name
         self._setup_collection()
@@ -78,23 +85,20 @@ class KnowledgeRetriever:
         try:
             # Try to get existing collection
             self.collection = self.chroma_client.get_collection(self.collection_name)
-            # If it exists, delete it to recreate with new dimensions
-            self.chroma_client.delete_collection(self.collection_name)
-            logger.info(
-                f"Deleted old collection '{self.collection_name}' to reset dimensions."
-            )
+            logger.info(f"Using existing collection '{self.collection_name}'")
         except Exception as e:
-            logger.info(f"No existing collection found: {str(e)}")
+            logger.info(f"No existing collection found, creating new one: {str(e)}")
 
-        # Create a fresh collection (now compatible with 1024-dim embeddings)
-        self.collection = self.chroma_client.create_collection(
-            self.collection_name,
-            metadata={
-                "hnsw:space": "cosine",  # Better for semantic similarity
-                "embedding_dimension": 1024,  # Optional: Explicitly declare dimensionality for clarity
-            },
-        )
-        logger.info("Created new collection with 1024-dimensional embeddings.")
+            # Create a fresh collection
+            self.collection = self.chroma_client.create_collection(
+                name=self.collection_name,
+                metadata={
+                    "hnsw:space": "cosine",
+                    "embedding_dimension": 1024,
+                }
+            )
+            logger.info(f"Created new collection '{self.collection_name}'")
+            logger.info("Created new collection with 1024-dimensional embeddings.")
 
     def _get_embeddings(self, texts: List[str]) -> List[List[float]]:
         """Get embeddings with retry logic."""
