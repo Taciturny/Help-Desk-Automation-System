@@ -204,9 +204,18 @@ class KnowledgeRetriever:
 
         return docs
 
-    def load_knowledge_base(self, documents_path: str = "./"):
+    def load_knowledge_base(self, documents_path: str = None):
         """Load knowledge base with enhanced processing."""
-        all_documents = []
+        if documents_path is None:
+            documents_path = os.path.dirname(os.path.abspath(__file__))
+
+        logger.info(f"Looking for files in: {documents_path}")
+
+        # Add this check
+        for filename in ["installation_guides.json", "troubleshooting_database.json", "categories.json"]:
+            filepath = os.path.join(documents_path, filename)
+            logger.info(f"Checking {filepath}: {os.path.exists(filepath)}")
+            all_documents = []
 
         files = {
             "installation_guides.json": self._process_installation_guides,
