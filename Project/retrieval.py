@@ -26,9 +26,9 @@ class KnowledgeRetriever:
         # Disable telemetry to prevent PostHog errors on cloud deployments
         self.chroma_client = chromadb.Client(
             Settings(
+                chroma_db_impl="duckdb+parquet",
+                persist_directory=None,
                 anonymized_telemetry=False,
-                allow_reset=True,
-                is_persistent=False,  # Explicitly use in-memory mode
             )
         )
 
