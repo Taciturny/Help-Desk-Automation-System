@@ -1,19 +1,19 @@
 """
 Optimized Knowledge Retrieval System with Higher Confidence
 """
+# Fix for Streamlit Cloud sqlite3 version issue
+import sys
+__import__('pysqlite3')
+import pysqlite3
+sys.modules['sqlite3'] = sys.modules['pysqlite3']
+
+# Now import chromadb and other modules
 import os
 import logging
 from typing import List, Dict
 import cohere
-
-
-# Fix for Streamlit Cloud sqlite3 version issue
-import sys
-import pysqlite3
-sys.modules['sqlite3'] = pysqlite3
-
-import chromadb
 from chromadb.config import Settings
+import chromadb
 
 from data_models import RetrievalResult
 
