@@ -4,3 +4,5 @@ numpy==1.26.4
 python-dotenv>=0.19.0
 pytest
 streamlit==1.37.1
+libgcc-ng
+libstdcxx-ng

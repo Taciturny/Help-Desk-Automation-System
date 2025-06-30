@@ -1,0 +1,36 @@
+name: Lint, and Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r Project/requirements.txt
+          pip install black ruff pytest
+
+      - name: Run Black (formatting)
+        run: black --check Project/
+
+      - name: Run Ruff (linting)
+        run: ruff check Project/
+
+      - name: Run unit tests
+        run: pytest Project/tests/ -v
+
+      - name: Run integration tests
+        run: pytest Project/tests/integration/ -v
