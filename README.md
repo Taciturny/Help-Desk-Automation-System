@@ -254,6 +254,12 @@ GitHub Actions workflow includes:
 3. **Security**: Dependency vulnerability scanning
 4. **Deployment**: Automatic deployment to Render on main branch
 
+## 🚀 Deployment
+
+The application is deployed on **Streamlit Cloud** and can be accessed here:
+👉 [Help Desk Assistant App](https://app-desk-automation-system-6qhqg4mcyfwxgubbzpjfaq.streamlit.app/)
+
+
 ## 🤝 Contributing
 
 1. Fork the repository
