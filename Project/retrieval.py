@@ -9,6 +9,7 @@ sys.modules['sqlite3'] = sys.modules['pysqlite3']
 
 # Now import chromadb and other modules
 import os
+import json
 import logging
 from typing import List, Dict, Any
 import cohere
