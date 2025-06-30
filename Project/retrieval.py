@@ -35,7 +35,6 @@ class KnowledgeRetriever:
             self.chroma_client = chromadb.PersistentClient(
                 path=self.persist_dir,
                 settings=Settings(
-                    chroma_db_impl="duckdb+parquet",
                     anonymized_telemetry=False
                 )
             )
