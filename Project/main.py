@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Interactive Help Desk System - Main Entry Point
 ===============================================
@@ -61,6 +60,24 @@ class HelpDeskSystem:
         # Step 1: Classify the request
         print("🔍 Classifying request...")
         classification = self.classifier.classify_request(user_message)
+        if classification.category == RequestCategory.NON_IT_REQUEST:
+            return {
+                "request_id": user_request.id,
+                "classification": {
+                    "category": classification.category.value,
+                    "confidence": classification.confidence,
+                    "keywords_matched": classification.keywords_matched,
+                    "reasoning": classification.reasoning,
+                },
+                "escalation": {"should_escalate": False, "reason": "Non-IT request"},
+                "knowledge_response": {
+                    "answer": "This appears to be a non-IT related request. Please contact the appropriate department:\n- HR questions: hr@company.com\n- Facilities: facilities@company.com\n- General inquiries: info@company.com",
+                    "confidence": 0.0,
+                    "sources_used": 0,
+                },
+                "timestamp": user_request.timestamp,
+                "is_non_it": True,  # Flag to handle display differently
+            }
 
         # Step 2: Check for escalation
         print("⚡ Checking escalation rules...")
@@ -80,6 +97,13 @@ class HelpDeskSystem:
         knowledge_response = self.response_generator.get_knowledge_response(
             user_message, template_type
         )
+        sources_used = len(
+            [
+                doc
+                for doc in knowledge_response.relevant_documents
+                if doc.relevance_score > 0.6
+            ]
+        )
 
         # Compile final response
         return {
@@ -94,7 +118,8 @@ class HelpDeskSystem:
             "knowledge_response": {
                 "answer": knowledge_response.answer,
                 "confidence": knowledge_response.confidence,
-                "sources_used": len(knowledge_response.relevant_documents),
+                "sources_used": sources_used,
+                # "sources_used": len(knowledge_response.relevant_documents),
             },
             "timestamp": user_request.timestamp,
         }
@@ -112,6 +137,21 @@ class HelpDeskSystem:
 
     def print_response(self, result: Dict[str, Any]):
         """Print formatted response to user."""
+
+        if result.get("is_non_it", False):
+            print("\n" + "=" * 60)
+            print(f"📋 REQUEST ID: {result['request_id']}")
+            print("=" * 60)
+            print(
+                f"🏷️  CATEGORY: {result['classification']['category'].replace('_', ' ').title()}"
+            )
+            print("⚠️  REASON: Non-IT related request")
+            print("\n💡 SUGGESTION:")
+            print("-" * 40)
+            print(result["knowledge_response"]["answer"])
+            print("=" * 60)
+            return  # Exit early, don't show standard IT response format
+
         print("\n" + "=" * 60)
         print(f"📋 REQUEST ID: {result['request_id']}")
         print("=" * 60)

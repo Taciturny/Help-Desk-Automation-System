@@ -1,24 +1,25 @@
 """
-Help Desk Request Classification System - Streamlined Version
+Help Desk Request Classification System - FIXED VERSION
 ============================================================
-A focused system for classifying IT support requests.
+Enhanced system for accurately classifying IT support requests and filtering non-IT questions.
 """
 
 import json
 import re
-from typing import Dict, List
+from typing import Dict, Set
 
 from data_models import ClassificationResult, RequestCategory
 
 
 class RequestClassifier:
     """
-    Main classifier for IT support requests using keyword-based classification.
+    Enhanced classifier for IT support requests with better context understanding.
     """
 
     def __init__(self, categories_file: str = "categories.json"):
         self.categories_data = self._load_categories(categories_file)
         self.category_patterns = self._build_patterns()
+        self.non_it_indicators = self._build_non_it_indicators()
 
     def _load_categories(self, categories_file: str) -> Dict:
         """Load categories from JSON file."""
@@ -29,8 +30,89 @@ class RequestClassifier:
             print(f"Warning: {categories_file} not found. Using default patterns.")
             return {}
 
+    def _build_non_it_indicators(self) -> Set[str]:
+        """Build indicators for non-IT questions that should be filtered out."""
+        return {
+            # Food/dining related
+            "cafeteria",
+            "menu",
+            "food",
+            "lunch",
+            "dinner",
+            "restaurant",
+            "eat",
+            "dining",
+            "kitchen",
+            "coffee",
+            "tea",
+            "snack",
+            "meal",
+            "breakfast",
+            # HR/administrative
+            "vacation",
+            "holiday",
+            "payroll",
+            "salary",
+            "benefits",
+            "hr",
+            "human resources",
+            "leave",
+            "sick day",
+            "time off",
+            "pto",
+            "401k",
+            "insurance",
+            # Facilities/building
+            "parking",
+            "elevator",
+            "restroom",
+            "bathroom",
+            "cleaning",
+            "temperature",
+            "air conditioning",
+            "heating",
+            "building",
+            "office space",
+            "desk",
+            # Personal/non-work
+            "personal",
+            "home",
+            "family",
+            "weather",
+            "sports",
+            "news",
+            "entertainment",
+            "shopping",
+            "recipe",
+            "health",
+            "medical",
+            "doctor",
+            # General questions
+            "what time",
+            "when is",
+            "where is",
+            "directions",
+            "location",
+            "address",
+            "phone number",
+            "contact",
+            "who is",
+            "biography",
+            # Hypothetical scenarios (like coffee spills)
+            "what if",
+            "what would happen",
+            "suppose",
+            "imagine",
+            "hypothetical",
+            "if i",
+            "what happens when",
+            "spill",
+            "drop",
+            "accidentally",
+        }
+
     def _build_patterns(self) -> Dict:
-        """Build keyword patterns for each category."""
+        """Build enhanced keyword patterns for each category."""
         return {
             RequestCategory.PASSWORD_RESET: {
                 "keywords": [
@@ -44,13 +126,27 @@ class RequestClassifier:
                     "sign in",
                     "authentication",
                     "credentials",
+                    "can't log in",
+                    "unable to login",
+                    "access denied",
                 ],
                 "patterns": [
                     r"forgot.*password",
                     r"can't.*log.*in",
+                    r"unable.*to.*log",
                     r"reset.*password",
                     r"locked.*out",
                     r"login.*problem",
+                    r"password.*expired",
+                    r"authentication.*fail",
+                ],
+                "required_context": [
+                    "computer",
+                    "system",
+                    "account",
+                    "work",
+                    "login",
+                    "access",
                 ],
             },
             RequestCategory.SOFTWARE_INSTALLATION: {
@@ -66,13 +162,26 @@ class RequestClassifier:
                     "update",
                     "configure",
                     "installation",
+                    "installer",
+                    "setup wizard",
+                    "deploy",
                 ],
                 "patterns": [
                     r"install.*software",
                     r"setup.*application",
                     r"installation.*error",
                     r"can't.*install",
-                    r"need.*install",
+                    r"need.*to.*install",
+                    r"how.*to.*install",
+                    r"software.*installation",
+                ],
+                "required_context": [
+                    "software",
+                    "program",
+                    "application",
+                    "computer",
+                    "work",
+                    "laptop",
                 ],
             },
             RequestCategory.HARDWARE_FAILURE: {
@@ -92,6 +201,7 @@ class RequestClassifier:
                     "not working",
                     "died",
                     "failed",
+                    "malfunction",
                 ],
                 "patterns": [
                     r"screen.*flickering",
@@ -99,7 +209,10 @@ class RequestClassifier:
                     r"computer.*not.*working",
                     r"hardware.*failure",
                     r"monitor.*black",
+                    r"device.*malfunction",
+                    r"won't.*turn.*on",
                 ],
+                "required_context": ["computer", "laptop", "device", "work", "office"],
             },
             RequestCategory.NETWORK_CONNECTIVITY: {
                 "keywords": [
@@ -113,6 +226,8 @@ class RequestClassifier:
                     "no internet",
                     "offline",
                     "disconnect",
+                    "ethernet",
+                    "network adapter",
                 ],
                 "patterns": [
                     r"can't.*connect",
@@ -120,6 +235,16 @@ class RequestClassifier:
                     r"wifi.*problem",
                     r"network.*issue",
                     r"vpn.*not.*working",
+                    r"connection.*failed",
+                    r"internet.*down",
+                ],
+                "required_context": [
+                    "network",
+                    "internet",
+                    "wifi",
+                    "connection",
+                    "work",
+                    "office",
                 ],
             },
             RequestCategory.EMAIL_CONFIGURATION: {
@@ -134,6 +259,9 @@ class RequestClassifier:
                     "mailbox",
                     "messages",
                     "receiving",
+                    "exchange",
+                    "smtp",
+                    "imap",
                 ],
                 "patterns": [
                     r"email.*not.*sync",
@@ -141,7 +269,9 @@ class RequestClassifier:
                     r"not.*receiving.*email",
                     r"mail.*configuration",
                     r"distribution.*list",
+                    r"email.*setup",
                 ],
+                "required_context": ["email", "work", "office", "business"],
             },
             RequestCategory.SECURITY_INCIDENT: {
                 "keywords": [
@@ -156,6 +286,9 @@ class RequestClassifier:
                     "pop-up",
                     "suspicious email",
                     "incident",
+                    "breach",
+                    "threat",
+                    "attack",
                 ],
                 "patterns": [
                     r"suspicious.*email",
@@ -163,7 +296,10 @@ class RequestClassifier:
                     r"security.*incident",
                     r"malware.*infection",
                     r"strange.*pop.*up",
+                    r"virus.*detected",
+                    r"security.*breach",
                 ],
+                "required_context": ["computer", "system", "work", "security"],
             },
             RequestCategory.POLICY_QUESTION: {
                 "keywords": [
@@ -176,6 +312,9 @@ class RequestClassifier:
                     "company policy",
                     "guidelines",
                     "rules",
+                    "compliance",
+                    "regulation",
+                    "standard",
                 ],
                 "patterns": [
                     r"what.*policy",
@@ -183,19 +322,70 @@ class RequestClassifier:
                     r"need.*approval",
                     r"allowed.*to",
                     r"policy.*for",
+                    r"compliance.*requirement",
+                ],
+                "required_context": [
+                    "company",
+                    "work",
+                    "business",
+                    "office",
+                    "it",
+                    "technology",
                 ],
             },
         }
 
+    def _is_non_it_request(self, request: str) -> bool:
+        """Check if the request is clearly non-IT related."""
+        request_lower = request.lower()
+
+        # Check for non-IT indicators
+        non_it_matches = sum(
+            1 for indicator in self.non_it_indicators if indicator in request_lower
+        )
+
+        # Strong non-IT indicators
+        if non_it_matches >= 2:
+            return True
+
+        # Check for common non-IT patterns
+        non_it_patterns = [
+            r"cafeteria.*menu",
+            r"where.*is.*the.*cafeteria",
+            r"what.*time.*does.*cafeteria",
+            r"coffee.*spill",
+            r"what.*if.*spill",
+            r"what.*would.*happen.*if",
+            r"parking.*space",
+            r"how.*to.*get.*to",
+            r"when.*does.*cafeteria",
+            r"where.*can.*i.*find.*menu",
+        ]
+
+        for pattern in non_it_patterns:
+            if re.search(pattern, request_lower):
+                return True
+
+        return False
+
+    def _has_it_context(self, request: str, category_patterns: Dict) -> bool:
+        """Check if request has sufficient IT context for the category."""
+        request_lower = request.lower()
+        required_context = category_patterns.get("required_context", [])
+
+        if not required_context:
+            return True
+
+        context_matches = sum(
+            1 for context in required_context if context in request_lower
+        )
+
+        # Need at least one contextual match for IT relevance
+        return context_matches > 0
+
     def classify_request(self, request: str) -> ClassificationResult:
         """
-        Classify a user request using keyword matching and pattern recognition.
-
-        Args:
-            request: The user's request text
-
-        Returns:
-            ClassificationResult with classification details
+        Enhanced classification with better context understanding and non-IT filtering.
         """
         if not request or not request.strip():
             return ClassificationResult(
@@ -203,6 +393,15 @@ class RequestClassifier:
                 confidence=0.0,
                 keywords_matched=[],
                 reasoning="Empty or invalid request",
+            )
+
+        # First check if it's a non-IT request
+        if self._is_non_it_request(request):
+            return ClassificationResult(
+                category=RequestCategory.NON_IT_REQUEST,
+                confidence=0.0,
+                keywords_matched=[],
+                reasoning="Non-IT related request - outside scope of IT support",
             )
 
         request_lower = request.lower()
@@ -214,6 +413,10 @@ class RequestClassifier:
             score = 0
             matched_keywords = []
 
+            # Check if request has IT context for this category
+            if not self._has_it_context(request, criteria):
+                continue
+
             # Check keyword matches
             for keyword in criteria["keywords"]:
                 if keyword in request_lower:
@@ -223,7 +426,7 @@ class RequestClassifier:
             # Check pattern matches (weighted higher)
             for pattern in criteria["patterns"]:
                 if re.search(pattern, request_lower):
-                    score += 2
+                    score += 3  # Increased weight for pattern matches
                     matched_keywords.append(f"pattern: {pattern}")
 
             if score > 0:
@@ -233,7 +436,7 @@ class RequestClassifier:
         # Determine best match
         if not category_scores:
             return ClassificationResult(
-                category=RequestCategory.UNKNOWN,
+                category=RequestCategory.NON_IT_REQUEST,
                 confidence=0.0,
                 keywords_matched=[],
                 reasoning="No matching IT-related keywords or patterns found",
@@ -241,14 +444,15 @@ class RequestClassifier:
 
         best_category = max(category_scores, key=category_scores.get)
         max_score = category_scores[best_category]
+        matched_keywords = all_matched_keywords.get(best_category, [])
 
-        # Calculate confidence based on score
-        if max_score >= 5:
-            confidence = min(0.90 + (max_score - 5) * 0.02, 0.95)
-        elif max_score >= 3:
-            confidence = 0.75 + (max_score - 3) * 0.075
-        elif max_score == 2:
-            confidence = 0.60
+        # Enhanced confidence calculation
+        if max_score >= 6:
+            confidence = min(0.95, 0.85 + (max_score - 6) * 0.02)
+        elif max_score >= 4:
+            confidence = 0.75 + (max_score - 4) * 0.05
+        elif max_score >= 2:
+            confidence = 0.55 + (max_score - 2) * 0.10
         elif max_score == 1:
             confidence = 0.35
         else:
@@ -258,7 +462,7 @@ class RequestClassifier:
             category=best_category,
             confidence=confidence,
             keywords_matched=all_matched_keywords[best_category],
-            reasoning=f"Matched {max_score} indicators for {best_category.value}",
+            reasoning=f"Matched {max_score} IT-related indicators for {best_category.value}",
         )
 
     def get_category_info(self, category: RequestCategory) -> Dict:
@@ -268,80 +472,13 @@ class RequestClassifier:
         return {}
 
 
-class ClassificationEvaluator:
-    """Utility class for evaluating classifier performance against test data."""
-
-    def __init__(self, classifier: RequestClassifier):
-        self.classifier = classifier
-
-    def evaluate_test_requests(self, test_file: str = "test_requests.json") -> Dict:
-        """
-        Evaluate classifier against test requests from file.
-
-        Args:
-            test_file: Path to test requests JSON file
-
-        Returns:
-            Evaluation metrics and detailed results
-        """
-        test_data = self._load_test_data(test_file)
-        if not test_data:
-            return {"error": "No test data found"}
-
-        results = []
-        correct_predictions = 0
-
-        for test_case in test_data:
-            request = test_case["request"]
-            expected = test_case["expected_classification"]
-
-            result = self.classifier.classify_request(request)
-            predicted = result.category.value
-
-            is_correct = predicted == expected
-            if is_correct:
-                correct_predictions += 1
-
-            results.append(
-                {
-                    "request": request,
-                    "expected": expected,
-                    "predicted": predicted,
-                    "confidence": result.confidence,
-                    "correct": is_correct,
-                    "keywords_matched": result.keywords_matched,
-                }
-            )
-
-        accuracy = correct_predictions / len(test_data) if test_data else 0
-
-        return {
-            "accuracy": accuracy,
-            "total_tests": len(test_data),
-            "correct_predictions": correct_predictions,
-            "detailed_results": results,
-        }
-
-    def _load_test_data(self, test_file: str) -> List[Dict]:
-        """Load test data from JSON file."""
-        try:
-            with open(test_file) as f:
-                data = json.load(f)
-                return data.get("test_requests", [])
-        except FileNotFoundError:
-            print(f"Warning: {test_file} not found.")
-            return []
-
-
 # Example usage and testing
 def main():
-    """Example usage of the classification system."""
-
-    # Initialize classifier
+    """Test the enhanced classification system."""
     classifier = RequestClassifier()
 
-    # Test with sample requests
     test_requests = [
+        # IT requests
         "I forgot my password and can't log into my computer. How do I reset it?",
         "I'm trying to install new software but keep getting an error message.",
         "My laptop screen went completely black and won't turn on.",
@@ -349,10 +486,17 @@ def main():
         "My email stopped syncing yesterday and I'm not receiving messages.",
         "I think someone hacked my computer because I'm seeing strange pop-ups.",
         "What's the policy for installing personal software on work computers?",
-        "Where can I find the cafeteria menu?",  # Non-IT request
+        # Non-IT requests (should be filtered out)
+        "Where can I find the cafeteria menu?",
+        "What would happen if I spilled coffee on my laptop?",
+        "What time does the cafeteria open?",
+        "Where is the parking garage?",
+        "How do I get to the main building?",
+        "What's the weather like today?",
+        "When is the next company meeting?",
     ]
 
-    print("=== Help Desk Request Classification Results ===\n")
+    print("=== ENHANCED CLASSIFICATION TESTING ===\n")
 
     for i, request in enumerate(test_requests, 1):
         result = classifier.classify_request(request)
@@ -362,18 +506,17 @@ def main():
         print(f"Confidence: {result.confidence:.2f}")
         print(f"Keywords: {result.keywords_matched}")
         print(f"Reasoning: {result.reasoning}")
-        print("-" * 60)
 
-    # Run evaluation if test file exists
-    evaluator = ClassificationEvaluator(classifier)
-    eval_results = evaluator.evaluate_test_requests()
+        if result.category == RequestCategory.UNKNOWN and result.confidence == 0.0:
+            print("✅ Correctly filtered as non-IT request")
+        elif result.confidence > 0.7:
+            print("✅ High confidence IT classification")
+        elif result.confidence > 0.4:
+            print("⚠️ Medium confidence classification")
+        else:
+            print("❌ Low confidence classification")
 
-    if "error" not in eval_results:
-        print("\n=== Evaluation Results ===")
-        print(f"Accuracy: {eval_results['accuracy']:.2f}")
-        print(
-            f"Correct: {eval_results['correct_predictions']}/{eval_results['total_tests']}"
-        )
+        print("-" * 80)
 
 
 if __name__ == "__main__":

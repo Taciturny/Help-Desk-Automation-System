@@ -24,6 +24,7 @@ class RequestCategory(Enum):
     SECURITY_INCIDENT = "security_incident"
     POLICY_QUESTION = "policy_question"
     UNKNOWN = "unknown"
+    NON_IT_REQUEST = "non_it_request"
 
 
 class EscalationPriority(Enum):

@@ -306,7 +306,7 @@ class KnowledgeRetriever:
 
     def _process_markdown(self, filepath: str) -> List[Dict]:
         """Enhanced markdown processing with better section detection."""
-        with open(filepath, encoding='utf-8') as f:
+        with open(filepath, encoding="utf-8") as f:
             content = f.read()
 
         docs = []

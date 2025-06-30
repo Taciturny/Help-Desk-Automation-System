@@ -219,7 +219,11 @@ Policy Response:""",
             quality_score += 0.05
 
         # Final confidence calculation
-        final_confidence = min(1.0, base_confidence + quality_score)
+        # final_confidence = min(1.0, base_confidence + quality_score)
+        final_confidence = min(
+            1.0, base_confidence + (1.0 - base_confidence) * quality_score
+        )
+
         return final_confidence
 
     def generate_response(self, query: str, context_docs: List[RetrievalResult]) -> str:
@@ -287,23 +291,33 @@ Policy Response:""",
     def get_knowledge_response(
         self, query: str, template_type: str = "standard"
     ) -> KnowledgeResponse:
-        """Get complete knowledge-based response with enhanced confidence."""
+        """Get response with proper relevance filtering."""
         if not self.retriever:
             raise ValueError("Retriever not initialized")
 
-        # Get relevant documents with more results for better context
-        relevant_docs = self.retriever.search_knowledge(query, n_results=7)
+        # Get documents but filter for relevance
+        all_docs = self.retriever.search_knowledge(query, n_results=10)
 
-        # Generate response
+        # Filter to only use truly relevant documents (score > 0.3)
+        relevant_docs = [doc for doc in all_docs if doc.relevance_score > 0.3]
+
+        # If no relevant docs found, return appropriate message
+        if not relevant_docs:
+            return KnowledgeResponse(
+                query=query,
+                answer="I don't have specific information about that topic in my knowledge base. Please contact IT support directly for assistance.",
+                relevant_documents=[],
+                confidence=0.0,
+            )
+
+        # Generate response using only relevant documents
         answer = self.generate_with_template(query, relevant_docs, template_type)
-
-        # Calculate enhanced confidence
         confidence = self._calculate_response_confidence(query, relevant_docs, answer)
 
         return KnowledgeResponse(
             query=query,
             answer=answer,
-            relevant_documents=relevant_docs,
+            relevant_documents=relevant_docs,  # Only actually relevant docs
             confidence=confidence,
         )
 
@@ -358,7 +372,7 @@ if __name__ == "__main__":
         print(f"\nQuery: {query} ({template})")
         response = generator.get_knowledge_response(query, template)
         print(f"Confidence: {response.confidence:.3f}")
-        print(f"Sources used: {len(response.relevant_documents)}")
+        # print(f"Sources used: {len(response.relevant_documents)}")
         print(f"Response: {response.answer[:200]}...")
         if response.confidence > 0.7:
             print("✅ High confidence response")
