@@ -1,14 +1,18 @@
 """
 Optimized Knowledge Retrieval System with Higher Confidence
 """
-
-import json
-import logging
 import os
-from typing import Any, Dict, List
+import logging
+from typing import List, Dict
+import cohere
+
+
+# Fix for Streamlit Cloud sqlite3 version issue
+import sys
+import pysqlite3
+sys.modules['sqlite3'] = pysqlite3
 
 import chromadb
-import cohere
 from chromadb.config import Settings
 
 from data_models import RetrievalResult
