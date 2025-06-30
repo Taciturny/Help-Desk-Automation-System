@@ -7,6 +7,16 @@ Clean, user-friendly interface with admin mode for technical details.
 import os
 from typing import Any, Dict
 
+import sys
+
+# Override sqlite3 with pysqlite3 for Streamlit Cloud deployment
+try:
+    __import__('pysqlite3')
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    # If pysqlite3 is not available, continue with default sqlite3
+    pass
+
 import streamlit as st
 
 # Import your main system components

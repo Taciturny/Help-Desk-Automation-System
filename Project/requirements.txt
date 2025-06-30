@@ -4,5 +4,3 @@ scikit-learn>=1.0.0
 python-dotenv>=0.19.0
 pytest
 streamlit
-pysqlite3-binary==0.5.2
-pysqlite3==0.5.2
