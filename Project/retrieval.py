@@ -204,36 +204,34 @@ class KnowledgeRetriever:
 
         return docs
 
-    def load_knowledge_base(self, documents_path: str = None):
-        """Load knowledge base with enhanced processing."""
+    def load_knowledge_base(self, documents_path: str = None) -> int:
+        """Load knowledge base with accurate progress reporting."""
         if documents_path is None:
             documents_path = os.path.dirname(os.path.abspath(__file__))
 
         logger.info(f"Looking for files in: {documents_path}")
+        all_documents = []
 
-        # Add this check
-        for filename in ["installation_guides.json", "troubleshooting_database.json", "categories.json"]:
-            filepath = os.path.join(documents_path, filename)
-            logger.info(f"Checking {filepath}: {os.path.exists(filepath)}")
-            all_documents = []
+        # First pass: Check which files exist
+        available_files = []
+        for filename in ["installation_guides.json", "troubleshooting_database.json",
+                        "categories.json", "company_it_policies.md", "knowledge_base.md"]:
+            if os.path.exists(os.path.join(documents_path, filename)):
+                available_files.append(filename)
 
-        files = {
-            "installation_guides.json": self._process_installation_guides,
-            "troubleshooting_database.json": self._process_troubleshooting,
-            "categories.json": self._process_categories,
-            "company_it_policies.md": self._process_markdown,
-            "knowledge_base.md": self._process_markdown,
-        }
+        if not available_files:
+            logger.warning("No knowledge base files found!")
+            return 0
 
-        for filename, processor in files.items():
-            filepath = os.path.join(documents_path, filename)
-            if os.path.exists(filepath):
-                try:
-                    documents = processor(filepath)
-                    all_documents.extend(documents)
-                    logger.info(f"Loaded {len(documents)} chunks from {filename}")
-                except Exception as e:
-                    logger.error(f"Error loading {filename}: {e}")
+        # Second pass: Process files
+        for filename in available_files:
+            processor = getattr(self, f"_process_{filename.split('.')[0]}", self._process_generic)
+            try:
+                documents = processor(os.path.join(documents_path, filename))
+                all_documents.extend(documents)
+                logger.info(f"Loaded {len(documents)} chunks from {filename}")
+            except Exception as e:
+                logger.error(f"Error loading {filename}: {e}")
 
         if all_documents:
             self._add_to_db(all_documents)
