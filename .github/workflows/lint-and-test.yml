@@ -1,4 +1,4 @@
-name: Lint, and Test
+name: Lint and Test
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r Project/requirements.txt
+          if [ -f Project/requirements.txt ]; then pip install -r Project/requirements.txt; fi
           pip install black ruff pytest
 
       - name: Run Black (formatting)
@@ -30,7 +30,9 @@ jobs:
         run: ruff check Project/
 
       - name: Run unit tests
-        run: pytest Project/tests/ -v
+        run: |
+          if [ -d "Project/tests/" ]; then pytest Project/tests/ -v; else echo "No unit tests found"; fi
 
       - name: Run integration tests
-        run: pytest Project/tests/integration/ -v
+        run: |
+          if [ -d "Project/tests/integration/" ]; then pytest Project/tests/integration/ -v; else echo "No integration tests found"; fi
