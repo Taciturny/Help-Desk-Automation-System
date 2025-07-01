@@ -17,7 +17,7 @@ select = [
     "B",   # Flake8-bugbear (common bugs)
     "UP",  # Pyupgrade (modern Python syntax)
 ]
-ignore = ["E501"]  # Ignore line-too-long (handled by black)
+ignore = ["E501", "UP006"]  # Ignore
 
 [tool.ruff.lint.per-file-ignores]
 "test_*.py" = ["E402"]  # Ignore import order in test files
