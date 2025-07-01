@@ -1,22 +1,25 @@
 """
 Optimized Knowledge Retrieval System with Higher Confidence
 """
+
 # Fix for Streamlit Cloud sqlite3 version issue
-import sys
-__import__('pysqlite3')
-import pysqlite3
-sys.modules['sqlite3'] = sys.modules['pysqlite3']
+import sys  # noqa: E402
+
+__import__("pysqlite3")  # noqa: E402
+import pysqlite3  # noqa: F401
+
+sys.modules["sqlite3"] = sys.modules["pysqlite3"]  # noqa: F401
 
 # Now import chromadb and other modules
-import os
-import json
-import logging
-from typing import List, Dict, Any
-import cohere
-from chromadb.config import Settings
-import chromadb
+import os  # noqa: E402
+import json  # noqa: E402
+import logging  # noqa: E402
+from typing import List, Dict, Any  # noqa: E402
+import cohere  # noqa: E402
+from chromadb.config import Settings  # noqa: E402
+import chromadb  # noqa: E402
 
-from data_models import RetrievalResult
+from data_models import RetrievalResult  # noqa: E402
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -34,10 +37,7 @@ class KnowledgeRetriever:
 
         try:
             self.chroma_client = chromadb.PersistentClient(
-                path=self.persist_dir,
-                settings=Settings(
-                    anonymized_telemetry=False
-                )
+                path=self.persist_dir, settings=Settings(anonymized_telemetry=False)
             )
         except Exception as e:
             logger.error(f"Failed to initialize ChromaDB: {str(e)}")
@@ -99,7 +99,7 @@ class KnowledgeRetriever:
                 metadata={
                     "hnsw:space": "cosine",
                     "embedding_dimension": 1024,
-                }
+                },
             )
             logger.info(f"Created new collection '{self.collection_name}'")
             logger.info("Created new collection with 1024-dimensional embeddings.")
@@ -213,12 +213,16 @@ class KnowledgeRetriever:
         try:
             self.collection.delete(where={})
             logger.info("Cleared existing documents from collection")
-        except:
+        except Exception:
             pass
         all_documents = []
 
         # Add this check
-        for filename in ["installation_guides.json", "troubleshooting_database.json", "categories.json"]:
+        for filename in [
+            "installation_guides.json",
+            "troubleshooting_database.json",
+            "categories.json",
+        ]:
             filepath = os.path.join(documents_path, filename)
             logger.info(f"Checking {filepath}: {os.path.exists(filepath)}")
             all_documents = []
